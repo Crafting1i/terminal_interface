@@ -2,8 +2,10 @@
 #include "util.h"
 
 #include <vector>
+
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 namespace engine {
 	class windows_manager {
@@ -21,14 +23,14 @@ namespace engine {
 		std::mutex mutex;
 		std::vector<std::thread*> threads;
 
-		bool is_working = false;
+		std::atomic<bool> is_working = false;
 	public:
 		windows_manager wm;
 		utility::event<void, int, int> on_key_pressed;
 
 	private:
 		void frame_request();
-		void init_thread(std::function<void(void)>);
+		void init_thread(std::function<void(std::mutex&)> cb);
 
 	public:
 		engine() {};

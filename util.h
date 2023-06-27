@@ -4,6 +4,10 @@
 #include <functional>
 
 namespace utility {
+	enum K_KEYS {
+		KK_ESC = 27
+	};
+	
 	double get_batt_level();
 
 	std::vector<std::string> split(const std::string& str, std::string_view pattern);
