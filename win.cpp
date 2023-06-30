@@ -8,10 +8,11 @@
 
 namespace win {
 
-window::window(uint32_t width, uint32_t height, uint32_t x, uint32_t y, window* parrent) {
-	this->parrent = parrent;
-	uint32_t ph, pw; // p = parrent
+window::window(int width, int height, int x, int y, window* parrent) {
+	mvprintw(8, 0,  "win constructor");
 
+	this->parrent = parrent;
+	int ph, pw; // p = parrent
 
 	if(!parrent) getmaxyx(stdscr, ph, pw);
 	else {
@@ -19,29 +20,39 @@ window::window(uint32_t width, uint32_t height, uint32_t x, uint32_t y, window* 
 		pw = parrent->get_width();
 	}
 
-	uint32_t nx = fmin(x, pw);
-	uint32_t ny = fmin(y, ph);
+	int nx = std::abs(fmin(x, pw));
+	int ny = std::abs(fmin(y, ph));
 
-	uint32_t nh = fmin(ph, height + ny) - ny;
-	uint32_t nw = fmin(pw, width + nx) - nx;
+	int nh = std::abs(fmin(ph, height + ny) - ny);
+	int nw = std::abs(fmin(pw, width + nx) - nx);
 
-	handle = newwin(nh, nw, ny, nx);
+	this->handle = newwin(nh, nw, ny, nx);
+
+	mvprintw(8, 0, "(%d;%d)   %dx%d   %x  win::window constructor", nx, ny, nw, nh, this->handle == nullptr);
+
 	this->width  = nw;
 	this->height = nh;
 	this->x = nx;
 	this->y = ny;
 };
+window::~window() {
+	this->parrent = nullptr;
 
-uint32_t window::get_x() {
+	for(window* win : this->children) {
+		//delete win;
+	}
+};
+
+int window::get_x() {
 	return x;
 };
-uint32_t window::get_y() {
+int window::get_y() {
 	return y;
 };
-uint32_t window::get_width() {
+int window::get_width() {
 	return width;
 };
-uint32_t window::get_height() {
+int window::get_height() {
 	return height;
 };
 
@@ -113,11 +124,11 @@ bool window::print(const char* text) {
 	init_pair(COLOR_PAIR_ID, TEXT_COLOR_ID, BG_COLOR_ID);
 
 	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
-//	wattrset(this->handle, A_UNDERLINE);
 
 	mvwprintw(this-> handle, style.padding_top, style.padding_left, "%s", result.c_str());
 
-//	wattrset(this->handle, 0);
+	mvprintw(7, 0, "(%d;%d)   %dx%d   %x", this->x, this->y, this->width, this->height, this->handle == nullptr);
+
 	wrefresh(this->handle);
 
 	return true;

@@ -8,7 +8,7 @@
 bool is_engine_initialized = false;
 
 // Constatnts
-const int MAX_FPS = 30;
+static const int MAX_FPS = 30;
 
 namespace engine {
 	// class windows_manager : public
@@ -26,7 +26,7 @@ namespace engine {
 	void engine::frame_request() {
 		// make some global function
 		for(win::window* win : this->wm.get_windows()) {
-			win->callback();
+			win->callback(win);
 		}
 
 		mvprintw(1, 1, "Hmmmm init_thread key_getch");
@@ -34,11 +34,12 @@ namespace engine {
 	}
 
 	void engine::init_thread(std::function<void(std::mutex&)> cb) {
+		// "this" capturing like this->, so other local variables (but not "cb"?)
 		std::thread* t = new std::thread([this, &cb]() {
 			while(this->is_working) {
 				cb(this->mutex);
 
-				std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000 / MAX_FPS));
 			}
 		});
 
@@ -64,7 +65,7 @@ namespace engine {
 		this->is_working = true;
 		int key_c = -1;
 
-		// Key press event
+		// Key press event thread
 		this->init_thread([this, &key_c](std::mutex& mutex) {
 			int key_code = getch();
 			int additional_code = getch();
@@ -90,10 +91,11 @@ namespace engine {
 		while(this->is_working) {
 			this->mutex.lock();
 			for(win::window* win : this->wm.get_windows()) {
-				win->callback();
+				win->callback(win);
 			}
 			
 			mvprintw(1, 0, "Hmmmm frames render");
+			mvprintw(2, 0, "%zu", this->wm.get_windows().size());
 			refresh();
 			
 			if (key_c == utility::K_KEYS::KK_ESC) this->stop();
@@ -103,32 +105,19 @@ namespace engine {
 		}
 	}
 	
-	// !REMEMBER! This function should be NOT called in KEYS_READ THREAD, NOT RENDER(MAIN)
+	// !REMEMBER! This function must be called IN RENDER(MAIN) THREAD
 	void engine::stop() {
 		this->is_working = false;
-		size_t a = this->threads.size();
-		
-		mvprintw(5, 0, "Mdaaaa, blya");
-		refresh();
-		
-		int i = 0;
+
 		for (auto it = this->threads.begin(); it != this->threads.end(); it = this->threads.begin()) {
 			this->threads.erase(it);
 			std::thread* t = *it;
-			mvprintw(4, i, "%d", i++);
-			mvprintw(3, 0, "%d   %d", it, this->threads.end());
-			refresh();
 			
 			t->join();
 			
 			delete t;
 		}
 
-		mvprintw(7, 0, "%zu   %zu", a, this->threads.size());
-		refresh();
-
 		endwin();
-		
-		std::cout << a << "   " << this->threads.size() << std::endl;
 	}
 }

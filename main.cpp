@@ -31,25 +31,29 @@ int main() {
 
 	engine::engine engn;
 
-	win::window key_view_win (25, 1, scrn_width - 25, 0, nullptr);
+	win::window key_view_win(25, 1, scrn_width - 25, 0, nullptr);
 	key_view_win.style.text_align = styles::keywords::SK_RIGHT;
-	key_view_win.callback = [&key_view_win, &key_code, &additional_kcode]() {
-		std::string text = "Key pressed: " + std::to_string(key_code) + '(' + std::to_string(additional_kcode) + ')';
-		key_view_win.print(text.c_str());
-	};
 
-	win::window datatime_win (26, 1, scrn_width - 26, 1, nullptr);
-	datatime_win.style.text_align = styles::keywords::SK_RIGHT;
+	int i = 0;
+	std::function<void(win::window*)> kvw_callback = [&key_view_win, &key_code, &additional_kcode, &i](win::window* thisptr) {
+		std::string text = "Key pressed: " + std::to_string(key_code) + '(' + std::to_string(additional_kcode) + ')';
+		thisptr->print(text.c_str());
+
+		mvprintw(3, 0, "%d", i++);
+	};
+	key_view_win.callback.swap(kvw_callback);
+
+	//win::window datatime_win (26, 1, scrn_width - 26, 1, nullptr);
+	//datatime_win.style.text_align = styles::keywords::SK_RIGHT;
 
 	engn.wm.add_win(&key_view_win);
 
-	int i = 0;
-	engn.on_key_pressed([&engn, &key_code, &additional_kcode, &i] (int key_c, int additional_kc) {
+	engn.on_key_pressed([&engn, &key_code, &additional_kcode] (int key_c, int additional_kc) {
 		key_code = key_c;
 		additional_kcode = additional_kc;
 	});
-	
+
 	engn.init();
-	
+
 	return 0;
 }
