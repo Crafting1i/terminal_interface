@@ -9,8 +9,6 @@
 namespace win {
 
 window::window(int width, int height, int x, int y, window* parrent) {
-	mvprintw(8, 0,  "win constructor");
-
 	this->parrent = parrent;
 	int ph, pw; // p = parrent
 
@@ -27,8 +25,6 @@ window::window(int width, int height, int x, int y, window* parrent) {
 	int nw = std::abs(fmin(pw, width + nx) - nx);
 
 	this->handle = newwin(nh, nw, ny, nx);
-
-	mvprintw(8, 0, "(%d;%d)   %dx%d   %x  win::window constructor", nx, ny, nw, nh, this->handle == nullptr);
 
 	this->width  = nw;
 	this->height = nh;
@@ -126,8 +122,6 @@ bool window::print(const char* text) {
 	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
 
 	mvwprintw(this-> handle, style.padding_top, style.padding_left, "%s", result.c_str());
-
-	mvprintw(7, 0, "(%d;%d)   %dx%d   %x", this->x, this->y, this->width, this->height, this->handle == nullptr);
 
 	wrefresh(this->handle);
 

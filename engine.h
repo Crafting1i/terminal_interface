@@ -36,6 +36,8 @@ namespace engine {
 		engine() {};
 
 		void init();
+		void start();
+
 		void stop();
 	};
 }

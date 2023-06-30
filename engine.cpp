@@ -29,7 +29,7 @@ namespace engine {
 			win->callback(win);
 		}
 
-		mvprintw(1, 1, "Hmmmm init_thread key_getch");
+		mvprintw(1, 0, "Hmmmm init_thread key_getch");
 		refresh();
 	}
 
@@ -61,27 +61,34 @@ namespace engine {
 		halfdelay(1); // delay 1 = 0.1 sec
 
 		signal(SIGINT, SIG_IGN);
+	}
 
+	void engine::start() {
 		this->is_working = true;
 		int key_c = -1;
+		int additional_kc = -1;
 
 		// Key press event thread
-		this->init_thread([this, &key_c](std::mutex& mutex) {
+		this->init_thread([this, &key_c, additional_kc](std::mutex& mutex) {
 			int key_code = getch();
 			int additional_code = getch();
-			
+
 			mutex.lock();
-			mvprintw(0, 0, "Hmmmm init_thread key_getch");
+
+			mvprintw(3, 0, "%s", std::to_string(additional_kc).c_str());
+
+			mvprintw(1, 0, "Hmmmm init_thread key_getch");
 			refresh();
 
 			if(key_code == -1 || additional_code == key_code) {
 				key_code = additional_code;
 				additional_code = -1;
 			}
-			
-			key_c = key_code;
 
-			// !ATTANTION! Here should calls engine::stop(),and mutex are locked here
+			key_c = key_code;
+			//additional_kc = additional_code;
+
+			// !ATTANTION! Here should calls engine::stop(), and mutex are locked here
 			this->on_key_pressed.call(key_code, additional_code);
 
 			mutex.unlock();
@@ -90,31 +97,33 @@ namespace engine {
 		// Rendering(main) thread
 		while(this->is_working) {
 			this->mutex.lock();
+
 			for(win::window* win : this->wm.get_windows()) {
 				win->callback(win);
 			}
-			
-			mvprintw(1, 0, "Hmmmm frames render");
-			mvprintw(2, 0, "%zu", this->wm.get_windows().size());
+
+			mvprintw(2, 0, "Hmmmm frames render");
 			refresh();
-			
-			if (key_c == utility::K_KEYS::KK_ESC) this->stop();
+
+			if (key_c == utility::K_KEYS::KK_ESC && additional_kc == -1) this->stop();
+
 			this->mutex.unlock();
-			
+
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / MAX_FPS));
 		}
 	}
-	
+
 	// !REMEMBER! This function must be called IN RENDER(MAIN) THREAD
 	void engine::stop() {
 		this->is_working = false;
 
+		// Mutex still locked
 		for (auto it = this->threads.begin(); it != this->threads.end(); it = this->threads.begin()) {
 			this->threads.erase(it);
 			std::thread* t = *it;
-			
+
 			t->join();
-			
+
 			delete t;
 		}
 

@@ -26,10 +26,12 @@ int main() {
 	int key_code = -1;
 	int additional_kcode = -1;
 
+	engine::engine engn;
+	engn.init();
+
 	int scrn_height, scrn_width;
 	getmaxyx(stdscr, scrn_height, scrn_width);
 
-	engine::engine engn;
 
 	win::window key_view_win(25, 1, scrn_width - 25, 0, nullptr);
 	key_view_win.style.text_align = styles::keywords::SK_RIGHT;
@@ -53,7 +55,8 @@ int main() {
 		additional_kcode = additional_kc;
 	});
 
-	engn.init();
+	engn.start();
 
 	return 0;
 }
+
