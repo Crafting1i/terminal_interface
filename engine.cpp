@@ -65,17 +65,18 @@ namespace engine {
 
 	void engine::start() {
 		this->is_working = true;
+
 		int key_c = -1;
-		int additional_kc = -1;
+		int akc = -1;
 
 		// Key press event thread
-		this->init_thread([this, &key_c, additional_kc](std::mutex& mutex) {
+		this->init_thread([this, &key_c, akc](std::mutex& mutex) {
 			int key_code = getch();
 			int additional_code = getch();
 
 			mutex.lock();
 
-			mvprintw(3, 0, "%s", std::to_string(additional_kc).c_str());
+			// mvprintw(3, 0, "%s", std::to_string(additional_kc).c_str());
 
 			mvprintw(1, 0, "Hmmmm init_thread key_getch");
 			refresh();
@@ -86,7 +87,7 @@ namespace engine {
 			}
 
 			key_c = key_code;
-			//additional_kc = additional_code;
+			//akc = additional_code;
 
 			// !ATTANTION! Here should calls engine::stop(), and mutex are locked here
 			this->on_key_pressed.call(key_code, additional_code);
@@ -105,7 +106,7 @@ namespace engine {
 			mvprintw(2, 0, "Hmmmm frames render");
 			refresh();
 
-			if (key_c == utility::K_KEYS::KK_ESC && additional_kc == -1) this->stop();
+			if (key_c == utility::K_KEYS::KK_ESC/* && akc == -1*/) this->stop();
 
 			this->mutex.unlock();
 
