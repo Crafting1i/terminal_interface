@@ -7,7 +7,7 @@ namespace utility {
 	enum K_KEYS {
 		KK_ESC = 27
 	};
-	
+
 	double get_batt_level();
 
 	std::vector<std::string> split(const std::string& str, std::string_view pattern);
@@ -31,7 +31,7 @@ namespace utility {
 		void operator()(callback_t cb) {
 			this->dispatcher.push_back(cb);
 		}
-		
+
 		void call(args_t ...args) {
 			for(auto cb : this->dispatcher) {
 				cb(args...);

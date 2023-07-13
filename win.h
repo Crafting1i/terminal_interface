@@ -7,11 +7,10 @@
 namespace win {
 
 class window {
-private:
+protected:
 	int width, height, x, y;
 	WINDOW* handle;
-	window* parrent;
-	std::vector<window*> children;
+	window* parent;
 
 public:
 	styles::styles style;
@@ -21,15 +20,40 @@ public:
 	window(const window&) = delete;
 	window& operator=(const window&) = delete;
 
-	window(int width, int height, int x, int y, window* parrent = nullptr);
-	~window();
+	window(int width, int height, int x, int y, window* parent = nullptr);
+	virtual ~window();
 
 	int get_x();
 	int get_y();
 	int get_width();
 	int get_height();
 
-	bool print(const char* text);
+	virtual void print() = 0;
+};
+
+class div : public window {
+	private:
+		std::vector<window*> children;
+
+	public:
+		div(int width, int height, int x, int y, window* parent = nullptr): window(width, height, x, y, parent) {};
+		virtual ~div();
+
+		void append(window* win);
+		bool remove(const window* win);
+
+		virtual void print();
+};
+
+class p : public window {
+public:
+	std::string inner_text;
+
+public:
+	p(int width, int height, int x, int y, window* parent = nullptr): window(width, height, x, y, parent) {};
+	virtual ~p();
+
+	virtual void print();
 };
 
 }

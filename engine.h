@@ -13,7 +13,7 @@ namespace engine {
 		std::vector<win::window*> windows;
 	public:
 		void add_win(win::window* win);
-		void remove_win(win::window* win);
+		bool remove_win(const win::window* win);
 
 		decltype(windows_manager::windows) get_windows();
 	};
@@ -26,10 +26,9 @@ namespace engine {
 		std::atomic<bool> is_working = false;
 	public:
 		windows_manager wm;
-		utility::event<void, int, int> on_key_pressed;
+		utility::event<void, int, int, int, int> on_key_pressed;
 
 	private:
-		void frame_request();
 		void init_thread(std::function<void(std::mutex&)> cb);
 
 	public:

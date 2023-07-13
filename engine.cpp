@@ -15,7 +15,12 @@ namespace engine {
 	void windows_manager::add_win(win::window* win) {
 		this->windows.push_back(win);
 	}
-	void windows_manager::remove_win(win::window* win) {
+	bool windows_manager::remove_win(const win::window* win) {
+		auto it = std::find(this->windows.begin(), this->windows.end(), win);
+		if(it == this->windows.end()) return false;
+
+		this->windows.erase(it);
+		return true;
 	}
 
 	decltype(windows_manager::windows) windows_manager::get_windows() {
@@ -23,16 +28,6 @@ namespace engine {
 	}
 
 	// class engine : private
-	void engine::frame_request() {
-		// make some global function
-		for(win::window* win : this->wm.get_windows()) {
-			win->callback(win);
-		}
-
-		mvprintw(1, 0, "Hmmmm init_thread key_getch");
-		refresh();
-	}
-
 	void engine::init_thread(std::function<void(std::mutex&)> cb) {
 		// "this" capturing like this->, so other local variables (but not "cb"?)
 		std::thread* t = new std::thread([this, &cb]() {
@@ -45,12 +40,15 @@ namespace engine {
 
 		this->threads.push_back(t);
 	}
+
 	// class engine : public
 	void engine::init() {
 		if(is_engine_initialized)
 			throw std::runtime_error("Engine has been initilized. You can't do it twice");
 
+		std::cout << "Hm";
 		initscr();
+		std::cout << "Hm";
 		start_color();
 
 		intrflush(stdscr, FALSE);
@@ -58,39 +56,59 @@ namespace engine {
 		keypad(stdscr, FALSE);
 		raw();
 		noecho();
-		halfdelay(1); // delay 1 = 0.1 sec
+//		halfdelay(1); // delay 1 = 0.1 sec
+		nodelay(stdscr, TRUE);
 
 		signal(SIGINT, SIG_IGN);
+		std::cout << "Em?";
 	}
 
 	void engine::start() {
 		this->is_working = true;
 
 		int key_c = -1;
-		int akc = -1;
+		int a_key_c = -1;
+		//int spec1_key_c = -1;
+		//int spec2_key_c = -1;
+
+		this->on_key_pressed([&key_c, &a_key_c](int k_code, int a_code, int s1_code, int s2_code) {
+			key_c = k_code;
+			a_key_c = a_code;
+		});
 
 		// Key press event thread
-		this->init_thread([this, &key_c, akc](std::mutex& mutex) {
-			int key_code = getch();
-			int additional_code = getch();
+		this->init_thread([this](std::mutex& mutex) {
+			int key_code        = getch();
+			int additional_code = -1;
+			int special1_code   = -1;
+			int special2_code   = -1;
 
-			mutex.lock();
+			if(key_code != -1) {
+				additional_code = getch();
+			}
+			if(additional_code != -1) {
+				special1_code = getch();
+			}
+			if(special1_code != -1) {
+				special2_code = getch();
+			}
 
-			// mvprintw(3, 0, "%s", std::to_string(additional_kc).c_str());
-
-			mvprintw(1, 0, "Hmmmm init_thread key_getch");
-			refresh();
-
-			if(key_code == -1 || additional_code == key_code) {
-				key_code = additional_code;
+			if(special2_code != -1 && (special2_code == key_code || special2_code == additional_code || special2_code == special1_code)) {
+				ungetch(special2_code);
+				special2_code = -1;
+			}
+			if(special1_code != -1 && (special1_code == key_code || special1_code == additional_code)) {
+				ungetch(special1_code);
+				special1_code = -1;
+			}
+			if(additional_code != -1 && additional_code == key_code) {
+				ungetch(additional_code);
 				additional_code = -1;
 			}
 
-			key_c = key_code;
-			//akc = additional_code;
-
+			mutex.lock();
 			// !ATTANTION! Here should calls engine::stop(), and mutex are locked here
-			this->on_key_pressed.call(key_code, additional_code);
+			this->on_key_pressed.call(key_code, additional_code, special1_code, special2_code);
 
 			mutex.unlock();
 		});
@@ -100,23 +118,23 @@ namespace engine {
 			this->mutex.lock();
 
 			for(win::window* win : this->wm.get_windows()) {
-				win->callback(win);
+				if(win->callback) win->callback(win);
 			}
-
-			mvprintw(2, 0, "Hmmmm frames render");
-			refresh();
-
-			if (key_c == utility::K_KEYS::KK_ESC/* && akc == -1*/) this->stop();
 
 			this->mutex.unlock();
 
+			if (key_c == utility::K_KEYS::KK_ESC && a_key_c == -1) this->stop();
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / MAX_FPS));
 		}
+
+		endwin();
 	}
 
 	// !REMEMBER! This function must be called IN RENDER(MAIN) THREAD
 	void engine::stop() {
+		this->mutex.lock();
 		this->is_working = false;
+		this->mutex.unlock();
 
 		// Mutex still locked
 		for (auto it = this->threads.begin(); it != this->threads.end(); it = this->threads.begin()) {
@@ -127,7 +145,5 @@ namespace engine {
 
 			delete t;
 		}
-
-		endwin();
 	}
 }

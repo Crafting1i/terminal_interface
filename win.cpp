@@ -8,14 +8,15 @@
 
 namespace win {
 
-window::window(int width, int height, int x, int y, window* parrent) {
-	this->parrent = parrent;
+// class window: public
+window::window(int width, int height, int x, int y, window* parent) {
+	this->parent = parent;
 	int ph, pw; // p = parrent
 
-	if(!parrent) getmaxyx(stdscr, ph, pw);
+	if(!parent) getmaxyx(stdscr, ph, pw);
 	else {
-		ph = parrent->get_height();
-		pw = parrent->get_width();
+		ph = parent->get_height();
+		pw = parent->get_width();
 	}
 
 	int nx = std::abs(fmin(x, pw));
@@ -32,11 +33,8 @@ window::window(int width, int height, int x, int y, window* parrent) {
 	this->y = ny;
 };
 window::~window() {
-	this->parrent = nullptr;
-
-	for(window* win : this->children) {
-		//delete win;
-	}
+	delwin(this->handle);
+	this->parent = nullptr;
 };
 
 int window::get_x() {
@@ -52,11 +50,40 @@ int window::get_height() {
 	return height;
 };
 
-bool window::print(const char* text) {
+// class div : public
+div::~div() {
+	for(window* win : this->children) {
+		delete win;
+	}
+};
+
+void div::append(window* win) {
+	this->children.push_back(win);
+};
+bool div::remove(const window* win) {
+	auto it = std::find(this->children.begin(), this->children.end(), win);
+	if(it == this->children.end()) return false;
+
+	this->children.erase(it);
+	return true;
+};
+
+void div::print() {
+	for(window* win : this->children) {
+		if(win->callback) win->callback(win);
+	}
+};
+
+// class p : public
+p::~p() {
+	this->parent = nullptr;
+};
+
+void p::print() {
 	int content_width  = this->width  - style.padding_left - style.padding_right;
 	int content_height = this->height - style.padding_top - style.padding_bottom;
 
-	std::string txt = (style.autotrim) ? utility::trim(text) : text;
+	std::string txt = (style.autotrim) ? utility::trim(this->inner_text) : this->inner_text;
 	std::string result = "";
 
 	while (txt.length()) {
@@ -124,8 +151,6 @@ bool window::print(const char* text) {
 	mvwprintw(this-> handle, style.padding_top, style.padding_left, "%s", result.c_str());
 
 	wrefresh(this->handle);
-
-	return true;
 };
 
 }
