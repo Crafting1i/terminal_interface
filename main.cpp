@@ -38,7 +38,9 @@ int main() {
 	my_styles.width = 31;
 	my_styles.height = 1;
 
-	win::p key_view_win(31, 1, 0, 0, nullptr);
+
+
+	win::p key_view_win(my_styles);
 	key_view_win.callback = [&key_view_win, &key_code, &additional_kcode, &special1_kcode, &special2_kcode](win::window* thisptr) {
 		std::string text = "Key pressed: " + std::to_string(key_code)
 			+ '(' + std::to_string(additional_kcode) + ')'
@@ -46,12 +48,10 @@ int main() {
 			+ '(' + std::to_string(special2_kcode) + ')';
 
 		key_view_win.inner_text = text;
-
-		thisptr->print();
 	};
 
-
-	win::p datetime_win (31, 1, 0, 1, nullptr);
+	my_styles.margin_top = 1;
+	win::p datetime_win (my_styles);
 	datetime_win.callback = [&datetime_win](win::window* thisptr) {
 		const size_t time_str_size = std::size("HH:MM:SS | dd.mm.YYYY");
 		char* time = new char[time_str_size];
@@ -61,22 +61,23 @@ int main() {
 
 		std::strftime(time, time_str_size, "%H:%M:%S | %d.%m.%Y", &tm);
 		datetime_win.inner_text = time;
-
-		thisptr->print();
 	};
 
-	win::p batt_level_win (31, 1, 0, 2, nullptr);
+	my_styles.margin_top = 2;
+	win::p batt_level_win (my_styles);
 	batt_level_win.callback = [&batt_level_win](win::window* thisptr) {
 		std::string chargelvl = "Charge: " + utility::to_string(utility::get_batt_level(), 2);
 		batt_level_win.inner_text = chargelvl;
-
-		thisptr->print();
 	};
 
+	win::div container (my_styles);
 
-	engn.wm.add_win(&key_view_win);
-	engn.wm.add_win(&datetime_win);
-	engn.wm.add_win(&batt_level_win);
+
+	container.append(&key_view_win);
+	container.append(&datetime_win);
+	container.append(&batt_level_win);
+
+	engn.wm.add_win(&container);
 
 	engn.on_key_pressed([&key_code, &additional_kcode, &special1_kcode, &special2_kcode] (int k_code, int a_code, int s1_code, int s2_code) {
 		key_code = k_code;

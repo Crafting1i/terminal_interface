@@ -8,9 +8,11 @@ namespace win {
 
 class window {
 protected:
-	int width, height, x, y;
+	int width, height;
 	WINDOW* handle;
 	window* parent;
+
+	int ppadding_x = 0, ppadding_y = 0;
 
 public:
 	styles::styles style;
@@ -20,13 +22,14 @@ public:
 	window(const window&) = delete;
 	window& operator=(const window&) = delete;
 
-	window(int width, int height, int x, int y, window* parent = nullptr);
+	window(const styles::styles& style = {});
 	virtual ~window();
 
-	int get_x();
-	int get_y();
 	int get_width();
 	int get_height();
+
+	// Sized gots from the style
+	void refresh_size();
 
 	virtual void print() = 0;
 };
@@ -36,7 +39,7 @@ class div : public window {
 		std::vector<window*> children;
 
 	public:
-		div(int width, int height, int x, int y, window* parent = nullptr): window(width, height, x, y, parent) {};
+		div(const styles::styles& style = {}): window(style) {};
 		virtual ~div();
 
 		void append(window* win);
@@ -50,7 +53,7 @@ public:
 	std::string inner_text;
 
 public:
-	p(int width, int height, int x, int y, window* parent = nullptr): window(width, height, x, y, parent) {};
+	p(const styles::styles& style = {}): window(style) {};
 	virtual ~p();
 
 	virtual void print();

@@ -119,6 +119,7 @@ namespace engine {
 
 			for(win::window* win : this->wm.get_windows()) {
 				if(win->callback) win->callback(win);
+				win->print();
 			}
 
 			this->mutex.unlock();

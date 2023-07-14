@@ -9,9 +9,8 @@
 namespace win {
 
 // class window: public
-window::window(int width, int height, int x, int y, window* parent) {
-	this->parent = parent;
-	int ph, pw; // p = parrent
+void window::refresh_size() {
+	int ph, pw; // p = parent
 
 	if(!parent) getmaxyx(stdscr, ph, pw);
 	else {
@@ -19,30 +18,35 @@ window::window(int width, int height, int x, int y, window* parent) {
 		pw = parent->get_width();
 	}
 
-	int nx = std::abs(fmin(x, pw));
-	int ny = std::abs(fmin(y, ph));
+	int nx = fmin(style.margin_left, pw);
+	int ny = fmin(style.margin_top, ph);
 
-	int nh = std::abs(fmin(ph, height + ny) - ny);
-	int nw = std::abs(fmin(pw, width + nx) - nx);
+	int nh = fmin(ph, style.height + this->ppadding_y + ny) - ny;
+	int nw = fmin(pw, style.width + this->ppadding_x + nx) - nx;
 
-	this->handle = newwin(nh, nw, ny, nx);
+	mvwin(this->handle, ny, nx);
+	wresize(this->handle, nh, nw);
 
 	this->width  = nw;
 	this->height = nh;
-	this->x = nx;
-	this->y = ny;
+};
+
+window::window(const styles::styles& style) {
+	this->style = style;
+
+	this->handle = derwin(
+		this->parent ? this->parent->handle : stdscr,
+		1, 1, 0, 0
+	);
+	if(!this->handle) throw std::runtime_error("Handle creating have failed");
+
+	this->refresh_size();
 };
 window::~window() {
 	delwin(this->handle);
 	this->parent = nullptr;
 };
 
-int window::get_x() {
-	return x;
-};
-int window::get_y() {
-	return y;
-};
 int window::get_width() {
 	return width;
 };
@@ -53,7 +57,7 @@ int window::get_height() {
 // class div : public
 div::~div() {
 	for(window* win : this->children) {
-		delete win;
+		//delete win;
 	}
 };
 
@@ -69,8 +73,11 @@ bool div::remove(const window* win) {
 };
 
 void div::print() {
+	this->refresh_size();
+
 	for(window* win : this->children) {
 		if(win->callback) win->callback(win);
+		win->print();
 	}
 };
 
@@ -80,6 +87,8 @@ p::~p() {
 };
 
 void p::print() {
+	this->refresh_size();
+
 	int content_width  = this->width  - style.padding_left - style.padding_right;
 	int content_height = this->height - style.padding_top - style.padding_bottom;
 
