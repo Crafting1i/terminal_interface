@@ -3,7 +3,7 @@
 namespace styles {
 
 enum keywords {
-	SK_LEFT, SK_RIGHT, SK_CENTER
+	SK_LEFT, SK_RIGHT, SK_CENTER, SK_BLOCK, SK_FIXED, SK_VERTICAL, SK_HORIZONTAL
 };
 
 class styles {
@@ -22,6 +22,8 @@ public:
 	bool autotrim = true;
 
 	keywords text_align = keywords::SK_LEFT; // left, right, center
+	keywords display = keywords::SK_BLOCK;
+	keywords align = keywords::SK_VERTICAL;
 };
 
 }

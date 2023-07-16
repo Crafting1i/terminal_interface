@@ -7,9 +7,22 @@
 #include <cmath>
 
 namespace win {
+// class window : protected
+void window::rewrite_parent(const window* parent) {
+	if(this->parent) this->parent->remove(this);
+	this->parent = parent;
 
-// class window: public
+	delwin(this->handle);
+
+	this->handle = derwin(parent ? parent->handle : stdscr, 1, 1, 0, 0);
+	if(!this->handle) throw std::runtime_error("Handle creating have failed");
+
+	this->refresh_size();
+}
+
+// class window : public
 void window::refresh_size() {
+	if(!this->handle) throw std::runtime_error("Can't use without window handle");
 	int ph, pw; // p = parent
 
 	if(!parent) getmaxyx(stdscr, ph, pw);
@@ -18,14 +31,24 @@ void window::refresh_size() {
 		pw = parent->get_width();
 	}
 
-	int nx = fmin(style.margin_left, pw);
-	int ny = fmin(style.margin_top, ph);
+	int nx = fmin(style.margin_left, pw) + this->ppadding_x;
+	int ny = fmin(style.margin_top, ph)  + this->ppadding_y;
 
-	int nh = fmin(ph, style.height + this->ppadding_y + ny) - ny;
-	int nw = fmin(pw, style.width + this->ppadding_x + nx) - nx;
 
+	int nh = fmin(ph + ny, style.height + ny) - ny;
+	int nw = fmin(pw + nx, style.width + nx)  - nx;
+
+	int mvcode;
+//	if(this->parent) mvcode = mvderwin(this->handle, ny, nx);
+//	else mvcode = mvwin(this->handle, ny, nx);
 	mvwin(this->handle, ny, nx);
 	wresize(this->handle, nh, nw);
+
+	//mvprintw(7 + ny, 20, "%d", mvcode == OK);
+
+	//int x, y;
+	//getbegyx(this->handle, y, x);
+	//mvprintw(7 + ny, 0, "(%d;%d) %dx%d", nx, ny, nw, nh);
 
 	this->width  = nw;
 	this->height = nh;
@@ -34,10 +57,7 @@ void window::refresh_size() {
 window::window(const styles::styles& style) {
 	this->style = style;
 
-	this->handle = derwin(
-		this->parent ? this->parent->handle : stdscr,
-		1, 1, 0, 0
-	);
+	this->handle = newwin(1, 1, 0, 0);
 	if(!this->handle) throw std::runtime_error("Handle creating have failed");
 
 	this->refresh_size();
@@ -47,27 +67,27 @@ window::~window() {
 	this->parent = nullptr;
 };
 
-int window::get_width() {
+int window::get_width() const {
 	return width;
 };
-int window::get_height() {
+int window::get_height() const {
 	return height;
 };
 
 // class div : public
 div::~div() {
-	for(window* win : this->children) {
-		//delete win;
-	}
+	this->children.clear();
 };
 
 void div::append(window* win) {
 	this->children.push_back(win);
+	win->rewrite_parent(this);
 };
 bool div::remove(const window* win) {
 	auto it = std::find(this->children.begin(), this->children.end(), win);
 	if(it == this->children.end()) return false;
 
+	(*it)->rewrite_parent(nullptr);
 	this->children.erase(it);
 	return true;
 };
@@ -75,7 +95,21 @@ bool div::remove(const window* win) {
 void div::print() {
 	this->refresh_size();
 
+	int padding_y, padding_x;
+
+	// Закостылила, надо как-то будет это исправить. см. window::refresh_size()
+	getbegyx(this->handle, padding_y, padding_x);
 	for(window* win : this->children) {
+		if(!win->parent) continue;
+
+		if(win->style.display != styles::keywords::SK_FIXED) {
+			win->ppadding_x = padding_x;
+
+			padding_y += win->style.margin_top;
+			win->ppadding_y = padding_y;
+			padding_y += win->style.height + win->style.margin_bottom;
+		}
+
 		if(win->callback) win->callback(win);
 		win->print();
 	}
@@ -87,6 +121,7 @@ p::~p() {
 };
 
 void p::print() {
+	if(!this->handle) throw std::runtime_error("Can't use without window handle");
 	this->refresh_size();
 
 	int content_width  = this->width  - style.padding_left - style.padding_right;
@@ -133,10 +168,10 @@ void p::print() {
 	}
 
 	const int TEXT_COLOR_ID = 1;
-	const int BG_COLOR_ID = 2;
+	const int BG_COLOR_ID   = 2;
 	const int COLOR_PAIR_ID = 8;
 
-	const int color_mask = 0b1111'1111;
+	const int color_mask   = 0b1111'1111;
 	const int hex2bin_koef = 8;
 
 	init_color(
