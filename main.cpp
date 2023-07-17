@@ -48,7 +48,7 @@ int main() {
 		key_view_win.inner_text = text;
 	};
 
-	my_styles.margin_top = 1;
+	//my_styles.margin_top = 1;
 	win::p datetime_win (my_styles);
 	datetime_win.callback = [&datetime_win](win::window* thisptr) {
 		const size_t time_str_size = std::size("HH:MM:SS | dd.mm.YYYY");
@@ -68,8 +68,8 @@ int main() {
 		batt_level_win.inner_text = chargelvl;
 	};
 
-	//my_styles.margin_top = 0;
-	my_styles.height = 15;
+	//my_styles.margin_top = 4;
+	my_styles.height = 3;
 	my_styles.width  = 40;
 	win::div container (my_styles);
 

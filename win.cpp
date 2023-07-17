@@ -8,7 +8,7 @@
 
 namespace win {
 // class window : protected
-void window::rewrite_parent(const window* parent) {
+void window::rewrite_parent(div* parent) {
 	if(this->parent) this->parent->remove(this);
 	this->parent = parent;
 
@@ -31,8 +31,8 @@ void window::refresh_size() {
 		pw = parent->get_width();
 	}
 
-	int nx = fmin(style.margin_left, pw) + this->ppadding_x;
-	int ny = fmin(style.margin_top, ph)  + this->ppadding_y;
+	int nx = this->ppadding_x ? this->ppadding_x : fmin(style.margin_left, pw);
+	int ny = this->ppadding_y ? this->ppadding_y : fmin(style.margin_top,  ph);
 
 
 	int nh = fmin(ph + ny, style.height + ny) - ny;
@@ -64,6 +64,8 @@ window::window(const styles::styles& style) {
 };
 window::~window() {
 	delwin(this->handle);
+
+	if(this->parent) this->parent->remove(this);
 	this->parent = nullptr;
 };
 
@@ -105,12 +107,15 @@ void div::print() {
 		if(win->style.display != styles::keywords::SK_FIXED) {
 			win->ppadding_x = padding_x;
 
+//			mvprintw(10, win->style.margin_top, "%d", win->get_height());
+
 			padding_y += win->style.margin_top;
 			win->ppadding_y = padding_y;
-			padding_y += win->style.height + win->style.margin_bottom;
+			padding_y += win->get_height() + win->style.margin_bottom;
 		}
 
 		if(win->callback) win->callback(win);
+
 		win->print();
 	}
 };

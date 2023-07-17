@@ -6,12 +6,16 @@
 
 namespace win {
 
+class window;
+class div;
+class p;
+
 class window {
 	friend class div;
 protected:
 	int width, height;
 	WINDOW* handle = nullptr;
-	const window* parent = nullptr;
+	div* parent = nullptr;
 
 	uint32_t ppadding_x = 0, ppadding_y = 0;
 
@@ -20,7 +24,7 @@ public:
 	std::function<void(window*)> callback;
 
 protected:
-	void rewrite_parent(const window* parent);
+	void rewrite_parent(div* parent);
 
 public:
 	window(const window& win) = delete;
