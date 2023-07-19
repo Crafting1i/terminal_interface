@@ -59,6 +59,8 @@ namespace engine {
 //		halfdelay(1); // delay 1 = 0.1 sec
 		nodelay(stdscr, TRUE);
 
+		curs_set(0);
+
 		signal(SIGINT, SIG_IGN);
 		std::cout << "Em?";
 	}

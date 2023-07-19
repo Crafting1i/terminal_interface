@@ -18,7 +18,6 @@ protected:
 	div* parent = nullptr;
 
 	uint32_t ppadding_x = 0, ppadding_y = 0;
-
 public:
 	styles::styles style;
 	std::function<void(window*)> callback;

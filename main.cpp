@@ -68,14 +68,21 @@ int main() {
 		batt_level_win.inner_text = chargelvl;
 	};
 
+	my_styles.height = 2;
+	win::p a_win (my_styles);
+	a_win.callback = [&a_win](win::window* thisptr) {
+		a_win.inner_text = "Hello,\nworld!";
+	};
+
 	//my_styles.margin_top = 4;
-	my_styles.height = 3;
+	my_styles.height = 4;
 	my_styles.width  = 40;
 	win::div container (my_styles);
 
 	container.append(&key_view_win);
 	container.append(&datetime_win);
 	container.append(&batt_level_win);
+	container.append(&a_win);
 
 	engn.wm.add_win(&container);
 

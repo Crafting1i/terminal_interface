@@ -23,6 +23,8 @@ void window::rewrite_parent(div* parent) {
 // class window : public
 void window::refresh_size() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
+	werase(this->handle);
+
 	int ph, pw; // p = parent
 
 	if(!parent) getmaxyx(stdscr, ph, pw);
@@ -34,7 +36,6 @@ void window::refresh_size() {
 	int nx = this->ppadding_x ? this->ppadding_x : fmin(style.margin_left, pw);
 	int ny = this->ppadding_y ? this->ppadding_y : fmin(style.margin_top,  ph);
 
-
 	int nh = fmin(ph + ny, style.height + ny) - ny;
 	int nw = fmin(pw + nx, style.width + nx)  - nx;
 
@@ -43,12 +44,6 @@ void window::refresh_size() {
 //	else mvcode = mvwin(this->handle, ny, nx);
 	mvwin(this->handle, ny, nx);
 	wresize(this->handle, nh, nw);
-
-	//mvprintw(7 + ny, 20, "%d", mvcode == OK);
-
-	//int x, y;
-	//getbegyx(this->handle, y, x);
-	//mvprintw(7 + ny, 0, "(%d;%d) %dx%d", nx, ny, nw, nh);
 
 	this->width  = nw;
 	this->height = nh;
@@ -105,13 +100,22 @@ void div::print() {
 		if(!win->parent) continue;
 
 		if(win->style.display != styles::keywords::SK_FIXED) {
+			if(this->style.align == styles::keywords::SK_VERTICAL)
+				padding_y += win->style.margin_top;
+			else padding_x += win->style.margin_left;
+
+			win->ppadding_y = padding_y;
 			win->ppadding_x = padding_x;
 
-//			mvprintw(10, win->style.margin_top, "%d", win->get_height());
+			win->refresh_size();
 
-			padding_y += win->style.margin_top;
-			win->ppadding_y = padding_y;
-			padding_y += win->get_height() + win->style.margin_bottom;
+			// Means "Not above then (this->height - paddding_y) and not less then 0"
+			win->height = fmax(fmin(win->height, this->height - padding_y), 0);
+			win->width = fmax(fmin(win->width, this->width - padding_x), 0);
+
+			if(this->style.align == styles::keywords::SK_VERTICAL)
+				padding_y += win->height + win->style.margin_bottom;
+			else padding_x += win->height + win->style.margin_right;
 		}
 
 		if(win->callback) win->callback(win);
@@ -127,7 +131,11 @@ p::~p() {
 
 void p::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
-	this->refresh_size();
+
+	if(this->width == 0 || this->height == 0) {
+		wrefresh(this->handle);
+		return;
+	}
 
 	int content_width  = this->width  - style.padding_left - style.padding_right;
 	int content_height = this->height - style.padding_top - style.padding_bottom;
@@ -135,8 +143,9 @@ void p::print() {
 	std::string txt = (style.autotrim) ? utility::trim(this->inner_text) : this->inner_text;
 	std::string result = "";
 
-	while (txt.length()) {
+	for (int i = 0; i < content_height && txt.length(); i += 1) {
 		std::string line = txt.substr(0, content_width);
+		line = utility::split(line, "\n")[0];
 
 		for (int i = 0; i < style.padding_left; i += 1) {
 			line = ' ' + line;
@@ -197,7 +206,7 @@ void p::print() {
 
 	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
 
-	mvwprintw(this-> handle, style.padding_top, style.padding_left, "%s", result.c_str());
+	mvwprintw(this->handle, style.padding_top, style.padding_left, "%s", result.c_str());
 
 	wrefresh(this->handle);
 };
