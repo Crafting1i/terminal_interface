@@ -54,6 +54,8 @@ class div : public window {
 		void append(window* win);
 		bool remove(const window* win);
 
+		//decltype(children) get_children();
+
 		virtual void print();
 };
 

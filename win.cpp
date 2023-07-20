@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include <string.h>
 #include <string>
 #include <cmath>
 
@@ -52,7 +53,7 @@ void window::refresh_size() {
 window::window(const styles::styles& style) {
 	this->style = style;
 
-	this->handle = newwin(1, 1, 0, 0);
+	this->handle = newwin(0, 0, 0, 0);
 	if(!this->handle) throw std::runtime_error("Handle creating have failed");
 
 	this->refresh_size();
@@ -78,6 +79,8 @@ div::~div() {
 
 void div::append(window* win) {
 	this->children.push_back(win);
+	werase(win->handle);
+
 	win->rewrite_parent(this);
 };
 bool div::remove(const window* win) {
@@ -85,9 +88,17 @@ bool div::remove(const window* win) {
 	if(it == this->children.end()) return false;
 
 	(*it)->rewrite_parent(nullptr);
+	werase((*it)->handle);
+
 	this->children.erase(it);
 	return true;
 };
+
+/*
+decltype(div::children) div::get_children() {
+	return std::vector<window*>(this->children);
+};
+*/
 
 void div::print() {
 	this->refresh_size();

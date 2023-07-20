@@ -11,22 +11,6 @@ bool is_engine_initialized = false;
 static const int MAX_FPS = 30;
 
 namespace engine {
-	// class windows_manager : public
-	void windows_manager::add_win(win::window* win) {
-		this->windows.push_back(win);
-	}
-	bool windows_manager::remove_win(const win::window* win) {
-		auto it = std::find(this->windows.begin(), this->windows.end(), win);
-		if(it == this->windows.end()) return false;
-
-		this->windows.erase(it);
-		return true;
-	}
-
-	decltype(windows_manager::windows) windows_manager::get_windows() {
-		return this->windows;
-	}
-
 	// class engine : private
 	void engine::init_thread(std::function<void(std::mutex&)> cb) {
 		// "this" capturing like this->, so other local variables (but not "cb"?)
@@ -46,9 +30,7 @@ namespace engine {
 		if(is_engine_initialized)
 			throw std::runtime_error("Engine has been initilized. You can't do it twice");
 
-		std::cout << "Hm";
 		initscr();
-		std::cout << "Hm";
 		start_color();
 
 		intrflush(stdscr, FALSE);
@@ -62,7 +44,11 @@ namespace engine {
 		curs_set(0);
 
 		signal(SIGINT, SIG_IGN);
-		std::cout << "Em?";
+
+		styles::styles style;
+		getmaxyx(stdscr, style.height, style.width);
+
+		this->div = new win::div(style);
 	}
 
 	void engine::start() {
@@ -119,10 +105,7 @@ namespace engine {
 		while(this->is_working) {
 			this->mutex.lock();
 
-			for(win::window* win : this->wm.get_windows()) {
-				if(win->callback) win->callback(win);
-				win->print();
-			}
+			this->div->print();
 
 			this->mutex.unlock();
 
@@ -148,5 +131,7 @@ namespace engine {
 
 			delete t;
 		}
+
+		delete this->div;
 	}
 }

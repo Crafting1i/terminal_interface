@@ -49,6 +49,7 @@ int main() {
 	};
 
 	//my_styles.margin_top = 1;
+	//my_styles.height = 2;
 	win::p datetime_win (my_styles);
 	datetime_win.callback = [&datetime_win](win::window* thisptr) {
 		const size_t time_str_size = std::size("HH:MM:SS | dd.mm.YYYY");
@@ -84,7 +85,7 @@ int main() {
 	container.append(&batt_level_win);
 	container.append(&a_win);
 
-	engn.wm.add_win(&container);
+	engn.div->append(&container);
 
 	engn.on_key_pressed([&key_code, &additional_kcode, &special1_kcode, &special2_kcode] (int k_code, int a_code, int s1_code, int s2_code) {
 		key_code = k_code;
