@@ -39,7 +39,7 @@ int main() {
 	my_styles.height = 1;
 
 	win::p key_view_win(my_styles);
-	key_view_win.callback = [&key_view_win, &key_code, &additional_kcode, &special1_kcode, &special2_kcode](win::window* thisptr) {
+	key_view_win.callback = [&key_view_win, &key_code, &additional_kcode, &special1_kcode, &special2_kcode]() {
 		std::string text = "Key pressed: " + std::to_string(key_code)
 			+ '(' + std::to_string(additional_kcode) + ')'
 			+ '(' + std::to_string(special1_kcode) + ')'
@@ -51,7 +51,7 @@ int main() {
 	//my_styles.margin_top = 1;
 	//my_styles.height = 2;
 	win::p datetime_win (my_styles);
-	datetime_win.callback = [&datetime_win](win::window* thisptr) {
+	datetime_win.callback = [&datetime_win]() {
 		const size_t time_str_size = std::size("HH:MM:SS | dd.mm.YYYY");
 		char* time = new char[time_str_size];
 
@@ -64,26 +64,28 @@ int main() {
 
 	//my_styles.margin_top = 2;
 	win::p batt_level_win (my_styles);
-	batt_level_win.callback = [&batt_level_win](win::window* thisptr) {
+	batt_level_win.callback = [&batt_level_win]() {
 		std::string chargelvl = "Charge: " + utility::to_string(utility::get_batt_level(), 2);
 		batt_level_win.inner_text = chargelvl;
 	};
 
 	my_styles.height = 2;
-	win::p a_win (my_styles);
-	a_win.callback = [&a_win](win::window* thisptr) {
-		a_win.inner_text = "Hello,\nworld!";
+	my_styles.pos_z = 1;
+	my_styles.position = styles::keywords::SK_FIXED;
+	win::p test_win (my_styles);
+	test_win.callback = [&test_win]() {
+		test_win.inner_text = "Hello,\n world!";
 	};
 
 	//my_styles.margin_top = 4;
-	my_styles.height = 4;
+	my_styles.height = 5;
 	my_styles.width  = 40;
 	win::div container (my_styles);
 
 	container.append(&key_view_win);
 	container.append(&datetime_win);
 	container.append(&batt_level_win);
-	container.append(&a_win);
+	container.append(&test_win);
 
 	engn.div->append(&container);
 

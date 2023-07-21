@@ -6,6 +6,7 @@
 #include <string.h>
 #include <string>
 #include <cmath>
+#include <algorithm>
 
 namespace win {
 // class window : protected
@@ -103,14 +104,21 @@ decltype(div::children) div::get_children() {
 void div::print() {
 	this->refresh_size();
 
-	int padding_y, padding_x;
+	std::sort(this->children.begin(), this->children.end(), [](const window* win1, const window* win2) {
+		return win1->style.pos_z < win2->style.pos_z && win2->style.position != styles::keywords::SK_STATIC;
+	});
 
+	int padding_y, padding_x;
+	int abs_padding_y, abs_padding_x;
 	// Закостылила, надо как-то будет это исправить. см. window::refresh_size()
-	getbegyx(this->handle, padding_y, padding_x);
+	getbegyx(this->handle, abs_padding_y, abs_padding_x);
+	padding_y = abs_padding_y;
+	padding_x = abs_padding_x;
+
 	for(window* win : this->children) {
 		if(!win->parent) continue;
 
-		if(win->style.display != styles::keywords::SK_FIXED) {
+		if(win->style.position != styles::keywords::SK_FIXED) {
 			if(this->style.align == styles::keywords::SK_VERTICAL)
 				padding_y += win->style.margin_top;
 			else padding_x += win->style.margin_left;
@@ -127,10 +135,13 @@ void div::print() {
 			if(this->style.align == styles::keywords::SK_VERTICAL)
 				padding_y += win->height + win->style.margin_bottom;
 			else padding_x += win->height + win->style.margin_right;
+		} else {
+			win->ppadding_y = win->style.margin_top;
+			win->ppadding_x = win->style.margin_left;
 		}
 
-		if(win->callback) win->callback(win);
 
+		if(win->callback) win->callback();
 		win->print();
 	}
 };

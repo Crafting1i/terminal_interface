@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <iterator>
 
 #include <functional>
 
@@ -12,6 +13,17 @@ namespace utility {
 
 	std::vector<std::string> split(const std::string& str, std::string_view pattern);
 	std::string to_string(double d, int precision);
+
+	/*
+	template<typename Iter> void bubble_sort_cb(
+		Iter begin, Iter end,
+		std::function<bool(
+			const typename std::iterator_traits<Iter>::value_type&,
+			const typename std::iterator_traits<Iter>::value_type&
+		)> cb
+	);
+	std::string to_string(const std::vector<int>& vec);
+	*/
 
 	std::string trim(const std::string& s);
 	std::string trim_begin(const std::string& s);

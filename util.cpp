@@ -48,6 +48,40 @@ namespace utility {
 		return ss.str();
 	}
 
+	/*
+	template<typename Iter> void bubble_sort_cb(
+		Iter begin, Iter end,
+		std::function<bool(
+			const typename std::iterator_traits<Iter>::value_type&,
+			const typename std::iterator_traits<Iter>::value_type&
+		)> cb
+	) {
+		bool is_swapped = false;
+		for(auto it_i = begin; it_i != end; it_i++) {
+			is_swapped = false;
+			for(auto it_j = it_i; it_j != end && it_j + 1 != end; it_j++) {
+				if(cb(it_j, it_j + 1)) {
+					std::swap(&(*it_j), &(*(it_j + 1)));
+					is_swapped = true;
+				}
+			}
+
+			if(!is_swapped) break;
+		}
+	}
+
+	std::string to_string(const std::vector<int>& vec) {
+		std::string res;
+
+		for(int i : vec) {
+			if(res.size()) res += ", ";
+			res += std::to_string(i);
+		}
+
+		return res;
+	}
+	*/
+
 	std::string trim(const std::string& s) {
 		return trim_begin(trim_end(s));
 	}

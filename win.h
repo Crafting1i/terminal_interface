@@ -20,7 +20,7 @@ protected:
 	uint32_t ppadding_x = 0, ppadding_y = 0;
 public:
 	styles::styles style;
-	std::function<void(window*)> callback;
+	std::function<void()> callback;
 
 protected:
 	void rewrite_parent(div* parent);
