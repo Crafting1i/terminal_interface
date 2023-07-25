@@ -7,6 +7,7 @@
 #include <string>
 #include <cmath>
 #include <algorithm>
+#include <regex>
 
 namespace win {
 // class window : protected
@@ -144,18 +145,21 @@ void div::print() {
 		if(win->callback) win->callback();
 		win->print();
 	}
-};
+}
 
 // class p : public
 p::~p() {
 	this->parent = nullptr;
-};
+}
 
 void p::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
+	this->refresh_size();
 
 	if(this->width == 0 || this->height == 0) {
-		wrefresh(this->handle);
+		werase(this->handle);
+		wnoutrefresh(this->handle);
+//		wrefresh(this->handle);
 		return;
 	}
 
@@ -163,11 +167,12 @@ void p::print() {
 	int content_height = this->height - style.padding_top - style.padding_bottom;
 
 	std::string txt = (style.autotrim) ? utility::trim(this->inner_text) : this->inner_text;
+	txt = std::regex_replace(txt, std::regex("\\a|\\b|\\f|\\n|\\r|\\t|\\v"), "");
+
 	std::string result = "";
 
 	for (int i = 0; i < content_height && txt.length(); i += 1) {
 		std::string line = txt.substr(0, content_width);
-		line = utility::split(line, "\n")[0];
 
 		for (int i = 0; i < style.padding_left; i += 1) {
 			line = ' ' + line;
@@ -230,7 +235,8 @@ void p::print() {
 
 	mvwprintw(this->handle, style.padding_top, style.padding_left, "%s", result.c_str());
 
-	wrefresh(this->handle);
+	touchwin(this->handle);
+	wnoutrefresh(this->handle);
 };
 
 }

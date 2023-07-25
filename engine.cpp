@@ -105,7 +105,11 @@ namespace engine {
 		while(this->is_working) {
 			this->mutex.lock();
 
+			//erase();
 			this->div->print();
+
+			doupdate();
+//			refresh();
 
 			this->mutex.unlock();
 

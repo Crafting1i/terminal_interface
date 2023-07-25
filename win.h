@@ -44,19 +44,19 @@ public:
 };
 
 class div : public window {
-	private:
-		std::vector<window*> children;
+private:
+	std::vector<window*> children;
 
-	public:
-		div(const styles::styles& style = {}): window(style) {};
-		virtual ~div();
+public:
+	div(const styles::styles& style = {}): window(style) {};
+	virtual ~div();
 
-		void append(window* win);
-		bool remove(const window* win);
+	void append(window* win);
+	bool remove(const window* win);
 
-		//decltype(children) get_children();
+	//decltype(children) get_children();
 
-		virtual void print();
+	virtual void print();
 };
 
 class p : public window {

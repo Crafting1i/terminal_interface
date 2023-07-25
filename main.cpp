@@ -71,7 +71,8 @@ int main() {
 
 	my_styles.height = 2;
 	my_styles.pos_z = 1;
-	my_styles.position = styles::keywords::SK_FIXED;
+//	my_styles.position = styles::keywords::SK_FIXED;
+	my_styles.margin_left = 3;
 	win::p test_win (my_styles);
 	test_win.callback = [&test_win]() {
 		test_win.inner_text = "Hello,\n world!";
@@ -80,6 +81,7 @@ int main() {
 	//my_styles.margin_top = 4;
 	my_styles.height = 5;
 	my_styles.width  = 40;
+	my_styles.margin_left = 0;
 	win::div container (my_styles);
 
 	container.append(&key_view_win);
