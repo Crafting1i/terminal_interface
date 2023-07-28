@@ -74,6 +74,12 @@ int window::get_height() const {
 	return height;
 };
 
+void window::clear() {
+	werase(this->handle);
+	touchwin(this->handle);
+	wnoutrefresh(this->handle);
+}
+
 // class div : public
 div::~div() {
 	this->children.clear();
@@ -129,9 +135,19 @@ void div::print() {
 
 			win->refresh_size();
 
-			// Means "Not above then (this->height - paddding_y) and not less then 0"
-			win->height = fmax(fmin(win->height, this->height - padding_y), 0);
-			win->width = fmax(fmin(win->width, this->width - padding_x), 0);
+			// Means
+			// "Not above then (this->height - paddding_y), style.max_height
+			// and not less then style.min_height"
+			// style.max_height have priority
+			win->height = fmin(
+				fmax(win->height, style.min_height),
+				fmin(this->height - padding_y, style.max_height)
+			);
+			win->width = fmin(
+				fmax(win->width, style.min_width),
+				fmin(this->width - padding_x, style.max_width)
+			);
+
 
 			if(this->style.align == styles::keywords::SK_VERTICAL)
 				padding_y += win->height + win->style.margin_bottom;
@@ -147,19 +163,76 @@ void div::print() {
 	}
 }
 
-// class p : public
+void div::clear() {
+	for(window* win : this->children) {
+		win->clear();
+	}
+	werase(this->handle);
+	touchwin(this->handle);
+	wnoutrefresh(this->handle);
+}
+
+// class p : private
 p::~p() {
 	this->parent = nullptr;
 }
 
+std::string p::align_line(std::string& line, int width) {
+	switch (this->style.text_align) {
+	case styles::keywords::SK_RIGHT:
+		for (int i = 0; i < line.length() - width; i += 1) {
+			line = ' ' + line;
+		}
+		break;
+	case styles::keywords::SK_CENTER:
+		for (int i = 0; i < (line.length() - width) / 2; i += 1) {
+			line = ' '  + line;
+		}
+	case styles::keywords::SK_LEFT:
+	default:
+		for (int i = 0; i < line.length() - width; i += 1) {
+			line += ' ';
+		}
+	};
+
+	return line;
+}
+
+void p::color_win() {
+	const int TEXT_COLOR_ID = 1;
+	const int BG_COLOR_ID   = 2;
+	const int COLOR_PAIR_ID = 8;
+
+	const int color_mask   = 0b1111'1111;
+	const int hex2bin_koef = 8;
+
+	init_color(
+		TEXT_COLOR_ID,
+		1000 * ((style.color >> (hex2bin_koef * 2)) & color_mask) / 255,
+		1000 * ((style.color >>  hex2bin_koef)      & color_mask) / 255,
+		1000 * (style.color                         & color_mask) / 255
+	);
+
+	init_color(
+		BG_COLOR_ID,
+		1000 * ((style.background_color >> (hex2bin_koef * 2)) & color_mask) / 255,
+		1000 * ((style.background_color >>  hex2bin_koef)      & color_mask) / 255,
+		1000 * (style.background_color                         & color_mask) / 255
+
+	);
+	init_pair(COLOR_PAIR_ID, TEXT_COLOR_ID, BG_COLOR_ID);
+
+	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
+}
+
+// class p : public
 void p::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
 	this->refresh_size();
 
-	if(this->width == 0 || this->height == 0) {
+	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
 		werase(this->handle);
 		wnoutrefresh(this->handle);
-//		wrefresh(this->handle);
 		return;
 	}
 
@@ -181,23 +254,7 @@ void p::print() {
 			line += ' ';
 		}
 
-		switch (style.text_align) {
-		case styles::keywords::SK_RIGHT:
-			for (int i = 0; i < line.length() - content_width; i += 1) {
-				line = ' ' + line;
-			}
-			break;
-		case styles::keywords::SK_CENTER:
-			for (int i = 0; i < (line.length() - content_width) / 2; i += 1) {
-				line = ' '  + line;
-			}
-
-		case styles::keywords::SK_LEFT:
-		default:
-			for (int i = 0; i < line.length() - content_width; i += 1) {
-				line += ' ';
-			}
-		};
+		line = this->align_line(line, content_width);
 
 		result += line;
 
@@ -208,31 +265,7 @@ void p::print() {
 		}
 	}
 
-	const int TEXT_COLOR_ID = 1;
-	const int BG_COLOR_ID   = 2;
-	const int COLOR_PAIR_ID = 8;
-
-	const int color_mask   = 0b1111'1111;
-	const int hex2bin_koef = 8;
-
-	init_color(
-		TEXT_COLOR_ID,
-		1000 * (((style.color >> (hex2bin_koef * 2)) & color_mask) / 255),
-		1000 * (((style.color >> hex2bin_koef) & color_mask) / 255),
-		1000 * ((style.color & color_mask) / 255)
-	);
-
-	init_color(
-		BG_COLOR_ID,
-		1000 * (((style.background_color >> (hex2bin_koef * 2)) & color_mask) / 255),
-		1000 * (((style.background_color >> hex2bin_koef) & color_mask) / 255),
-		1000 * ((style.background_color & color_mask) / 255)
-
-	);
-	init_pair(COLOR_PAIR_ID, TEXT_COLOR_ID, BG_COLOR_ID);
-
-	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
-
+	this->color_win();
 	mvwprintw(this->handle, style.padding_top, style.padding_left, "%s", result.c_str());
 
 	touchwin(this->handle);

@@ -41,6 +41,7 @@ public:
 	void refresh_size();
 
 	virtual void print() = 0;
+	virtual void clear();
 };
 
 class div : public window {
@@ -57,11 +58,16 @@ public:
 	//decltype(children) get_children();
 
 	virtual void print();
+	virtual void clear();
 };
 
 class p : public window {
 public:
 	std::string inner_text;
+
+private:
+	std::string align_line(std::string& str, int width);
+	void color_win();
 
 public:
 	p(const styles::styles& style = {}): window(style) {};

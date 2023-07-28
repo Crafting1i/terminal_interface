@@ -1,4 +1,5 @@
 #include <string>
+#include <climits>
 
 namespace styles {
 
@@ -10,6 +11,9 @@ class styles {
 public:
 	styles() {};
 	unsigned int width = 1, height = 1;
+	unsigned int max_width = UINT_MAX, max_height = UINT_MAX;
+	unsigned int min_width = 0,        min_height = 0;
+
 
 	unsigned int padding_top = 0,    padding_right = 0,
 		     padding_bottom = 0, padding_left = 0;
@@ -20,6 +24,7 @@ public:
 	unsigned int pos_z = 0;
 
 	bool autotrim = true;
+	bool is_visible = true;
 
 	keywords text_align = keywords::SK_LEFT; // left, right, center
 	keywords position = keywords::SK_STATIC;
