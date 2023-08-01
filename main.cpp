@@ -78,16 +78,23 @@ int main() {
 		test_win.inner_text = "Hello,\n world!";
 	};
 
-	//my_styles.margin_top = 4;
-	my_styles.height = 5;
-	my_styles.width  = 40;
 	my_styles.margin_left = 0;
+	my_styles.width = 10;
+	win::progress progress_win(my_styles);
+	progress_win.min = -10;
+	progress_win.max = 0;
+	progress_win.value = -1;
+
+	//my_styles.margin_top = 4;
+	my_styles.height = 10;
+	my_styles.width  = 40;
 	win::div container (my_styles);
 
 	container.append(&key_view_win);
 	container.append(&datetime_win);
 	container.append(&batt_level_win);
 	container.append(&test_win);
+	container.append(&progress_win);
 
 	engn.div->append(&container);
 

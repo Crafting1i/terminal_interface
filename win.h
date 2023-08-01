@@ -24,6 +24,7 @@ public:
 
 protected:
 	void rewrite_parent(div* parent);
+	void color_win();
 
 public:
 	window(const window& win) = delete;
@@ -67,11 +68,22 @@ public:
 
 private:
 	std::string align_line(std::string& str, int width);
-	void color_win();
 
 public:
 	p(const styles::styles& style = {}): window(style) {};
 	virtual ~p();
+
+	virtual void print();
+};
+
+class progress : public window {
+public:
+	long long max = 100, min = 0, value = 0;
+	char fill = '#';
+
+public:
+	progress(const styles::styles& style = {}): window(style) {};
+	virtual ~progress();
 
 	virtual void print();
 };

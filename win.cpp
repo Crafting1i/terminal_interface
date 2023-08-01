@@ -39,8 +39,8 @@ void window::refresh_size() {
 	int nx = this->ppadding_x ? this->ppadding_x : fmin(style.margin_left, pw);
 	int ny = this->ppadding_y ? this->ppadding_y : fmin(style.margin_top,  ph);
 
-	int nh = fmin(ph + ny, style.height + ny) - ny;
-	int nw = fmin(pw + nx, style.width + nx)  - nx;
+	int nh = fmin(ph + ny, style.height.get_value() + ny) - ny;
+	int nw = fmin(pw + nx, style.width.get_value()  + nx) - nx;
 
 	int mvcode;
 //	if(this->parent) mvcode = mvderwin(this->handle, ny, nx);
@@ -78,6 +78,33 @@ void window::clear() {
 	werase(this->handle);
 	touchwin(this->handle);
 	wnoutrefresh(this->handle);
+}
+
+void window::color_win() {
+	const int TEXT_COLOR_ID = 1;
+	const int BG_COLOR_ID   = 2;
+	const int COLOR_PAIR_ID = 8;
+
+	const int color_mask   = 0b1111'1111;
+	const int hex2bin_koef = 8;
+
+	init_color(
+		TEXT_COLOR_ID,
+		1000 * ((style.color >> (hex2bin_koef * 2)) & color_mask) / 255,
+		1000 * ((style.color >>  hex2bin_koef)      & color_mask) / 255,
+		1000 * (style.color                         & color_mask) / 255
+	);
+
+	init_color(
+		BG_COLOR_ID,
+		1000 * ((style.background_color >> (hex2bin_koef * 2)) & color_mask) / 255,
+		1000 * ((style.background_color >>  hex2bin_koef)      & color_mask) / 255,
+		1000 * (style.background_color                         & color_mask) / 255
+
+	);
+	init_pair(COLOR_PAIR_ID, TEXT_COLOR_ID, BG_COLOR_ID);
+
+	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
 }
 
 // class div : public
@@ -139,13 +166,28 @@ void div::print() {
 			// "Not above then (this->height - paddding_y), style.max_height
 			// and not less then style.min_height"
 			// style.max_height have priority
+			uint32_t style_width = win->style.width.get_type() == styles::digit_type::DT_PIXEL
+				? win->style.width.get_value() : win->style.width.get_value() * this->width / 100;
+			uint32_t style_height = win->style.height.get_type() == styles::digit_type::DT_PIXEL
+				? win->style.height.get_value() : win->style.height.get_value() * this->height / 100;
+
+			uint32_t style_max_width = win->style.max_width.get_type() == styles::digit_type::DT_PIXEL
+				? win->style.max_width.get_value() : win->style.max_width.get_value() * this->width / 100;
+			uint32_t style_max_height = win->style.max_height.get_type() == styles::digit_type::DT_PIXEL
+				? win->style.max_height.get_value() : win->style.max_height.get_value() * this->height / 100;
+
+			uint32_t style_min_width = win->style.min_width.get_type() == styles::digit_type::DT_PIXEL
+				? win->style.min_width.get_value() : win->style.min_width.get_value() * this->width / 100;
+			uint32_t style_min_height = win->style.min_height.get_type() == styles::digit_type::DT_PIXEL
+				? win->style.min_height.get_value() : win->style.min_height.get_value() * this->height / 100;
+
 			win->height = fmin(
-				fmax(win->height, style.min_height),
-				fmin(this->height - padding_y, style.max_height)
+				fmax(style_height, style_min_height),
+				fmin(this->height - padding_y, style_max_height)
 			);
 			win->width = fmin(
-				fmax(win->width, style.min_width),
-				fmin(this->width - padding_x, style.max_width)
+				fmax(style_width, style_min_width),
+				fmin(this->width - padding_x, style_max_width)
 			);
 
 
@@ -198,33 +240,6 @@ std::string p::align_line(std::string& line, int width) {
 	return line;
 }
 
-void p::color_win() {
-	const int TEXT_COLOR_ID = 1;
-	const int BG_COLOR_ID   = 2;
-	const int COLOR_PAIR_ID = 8;
-
-	const int color_mask   = 0b1111'1111;
-	const int hex2bin_koef = 8;
-
-	init_color(
-		TEXT_COLOR_ID,
-		1000 * ((style.color >> (hex2bin_koef * 2)) & color_mask) / 255,
-		1000 * ((style.color >>  hex2bin_koef)      & color_mask) / 255,
-		1000 * (style.color                         & color_mask) / 255
-	);
-
-	init_color(
-		BG_COLOR_ID,
-		1000 * ((style.background_color >> (hex2bin_koef * 2)) & color_mask) / 255,
-		1000 * ((style.background_color >>  hex2bin_koef)      & color_mask) / 255,
-		1000 * (style.background_color                         & color_mask) / 255
-
-	);
-	init_pair(COLOR_PAIR_ID, TEXT_COLOR_ID, BG_COLOR_ID);
-
-	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
-}
-
 // class p : public
 void p::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
@@ -271,5 +286,39 @@ void p::print() {
 	touchwin(this->handle);
 	wnoutrefresh(this->handle);
 };
+
+//class progress : public
+void progress::print() {
+	if(!this->handle) throw std::runtime_error("Can't use without window handle");
+	this->refresh_size();
+
+	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
+		werase(this->handle);
+		wnoutrefresh(this->handle);
+		return;
+	}
+
+	int content_width  = this->width  - style.padding_left - style.padding_right;
+	int content_height = this->height - style.padding_top - style.padding_bottom;
+
+	this->value = fmax(fmin(max, value), min);
+	int progress = content_width * (value - min) / (max - min);
+	std::string line = "";
+	std::string result = "";
+
+	for(int i = 0; i < progress; i += 1) line += this->fill;
+	for(int i = 0; i < content_width - progress; i += 1) line += ' ';
+	for(int i = 0; i < content_height; i += 1) result += line;
+
+	this->color_win();
+	mvwprintw(this->handle, style.padding_top, style.padding_left, "%s", result.c_str());
+
+	touchwin(this->handle);
+	wnoutrefresh(this->handle);
+}
+
+progress::~progress() {
+	this->parent = nullptr;
+}
 
 }

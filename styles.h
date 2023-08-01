@@ -1,18 +1,75 @@
 #include <string>
 #include <climits>
+#include <cmath>
+#include <stdexcept>
 
 namespace styles {
 
 enum keywords {
 	SK_LEFT, SK_RIGHT, SK_CENTER, SK_STATIC, SK_FIXED, SK_VERTICAL, SK_HORIZONTAL
 };
+enum class digit_type {
+	DT_PIXEL, DT_PERCENT
+};
+
+class s_digit {
+private:
+	uint32_t value;
+	digit_type type = digit_type::DT_PIXEL;
+
+public:
+	s_digit(unsigned int val, digit_type t = digit_type::DT_PIXEL): type(t) {
+		if(type == digit_type::DT_PERCENT) {
+			this->value = fmin(val, 100);
+		} else this->value = val;
+	}
+
+	s_digit& operator=(unsigned int val) {
+		if(type == digit_type::DT_PERCENT) {
+			this->value = fmin(val, 100);
+		} else this->value = val;
+
+		return *this;
+	}
+
+	digit_type get_type() {
+		return this->type;
+	}
+	uint32_t get_value() {
+		return this->value;
+	}
+
+	/*explicit operator uint32_t() const {
+		return this->value;
+	}*/
+	explicit operator bool() const {
+		return this->value > 0;
+	}
+	bool operator>(const s_digit& d) const {
+		if(this->type != d.type) return false;
+		return this->value > d.value;
+	}
+	bool operator<(const s_digit& d) const {
+		if(this->type != d.type) return false;
+		return this->value < d.value;
+	}
+
+	s_digit operator+(const s_digit& d) {
+		if(this->type != d.type) throw std::logic_error("Bad operation with s_digit of different types");
+		return s_digit(this->value + d.value, this->type);
+	}
+	s_digit operator-(const s_digit& d) {
+		if(this->type != d.type) throw std::logic_error("Bad operation with s_digit of different types");
+		return s_digit(this->value - d.value, this->type);
+	}
+};
 
 class styles {
 public:
 	styles() {};
-	unsigned int width = 1, height = 1;
-	unsigned int max_width = UINT_MAX, max_height = UINT_MAX;
-	unsigned int min_width = 0,        min_height = 0;
+	s_digit width { 1 }, height { 1 };
+	s_digit max_width { UINT_MAX }, max_height { UINT_MAX };
+	s_digit min_width { 0 },        min_height { 0 };
 
 
 	unsigned int padding_top = 0,    padding_right = 0,
