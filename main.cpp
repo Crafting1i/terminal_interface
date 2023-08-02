@@ -62,12 +62,27 @@ int main() {
 		datetime_win.inner_text = time;
 	};
 
-	//my_styles.margin_top = 2;
-	win::p batt_level_win (my_styles);
-	batt_level_win.callback = [&batt_level_win]() {
-		std::string chargelvl = "Charge: " + utility::to_string(utility::get_batt_level(), 2);
-		batt_level_win.inner_text = chargelvl;
+
+	// Creating battery charge indicator
+	styles::styles batt_styles;
+	batt_styles.width = 25;
+	batt_styles.align = styles::keywords::SK_HORIZONTAL;
+	win::div batt_level_div (batt_styles);
+
+//	batt_styles.align = styles::keywords::SK_VERTICAL;
+	batt_styles.width = 20;
+	win::progress batt_progress(batt_styles);
+	batt_progress.callback = [&batt_progress]() {
+		batt_progress.value = utility::get_batt_level();
 	};
+
+	batt_styles.width = 5;
+	win::p batt_level_p (batt_styles);
+	batt_level_p.callback = [&batt_level_p]() {
+		batt_level_p.inner_text = utility::to_string(utility::get_batt_level(), 2);
+	};
+	batt_level_div.append(&batt_progress);
+	batt_level_div.append(&batt_level_p);
 
 	my_styles.height = 2;
 	my_styles.pos_z = 1;
@@ -79,12 +94,6 @@ int main() {
 	};
 
 	my_styles.margin_left = 0;
-	my_styles.width = 10;
-	win::progress progress_win(my_styles);
-	progress_win.min = -10;
-	progress_win.max = 0;
-	progress_win.value = -1;
-
 	//my_styles.margin_top = 4;
 	my_styles.height = 10;
 	my_styles.width  = 40;
@@ -92,9 +101,8 @@ int main() {
 
 	container.append(&key_view_win);
 	container.append(&datetime_win);
-	container.append(&batt_level_win);
-	container.append(&test_win);
-	container.append(&progress_win);
+	container.append(&batt_level_div);
+//	container.append(&test_win);
 
 	engn.div->append(&container);
 

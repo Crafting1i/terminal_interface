@@ -17,6 +17,8 @@ protected:
 	WINDOW* handle = nullptr;
 	div* parent = nullptr;
 
+	bool is_focus = false;
+
 	uint32_t ppadding_x = 0, ppadding_y = 0;
 public:
 	styles::styles style;

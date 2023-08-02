@@ -193,7 +193,7 @@ void div::print() {
 
 			if(this->style.align == styles::keywords::SK_VERTICAL)
 				padding_y += win->height + win->style.margin_bottom;
-			else padding_x += win->height + win->style.margin_right;
+			else padding_x += win->width + win->style.margin_right;
 		} else {
 			win->ppadding_y = win->style.margin_top;
 			win->ppadding_x = win->style.margin_left;
