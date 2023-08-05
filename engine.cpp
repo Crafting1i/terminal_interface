@@ -5,12 +5,37 @@
 #include <chrono>
 
 // Global Variables
-bool is_engine_initialized = false;
+static bool is_engine_initialized = false;
 
 // Constatnts
 static const int MAX_FPS = 30;
 
 namespace engine {
+	// class windows_selector : public
+	windows_selector::~windows_selector() {
+		this->focused = nullptr;
+	}
+
+	int windows_selector::get_selected_index() const {
+		return this->selected_index;
+	}
+	win::window* windows_selector::get_focused() const {
+		return this->focused;
+	}
+
+	win::window* windows_selector::list_up() {
+		return this->focused;
+	}
+	win::window* windows_selector::list_down() {
+		return this->focused;
+	}
+	win::window* windows_selector::select() {
+		return this->focused;
+	}
+	win::window* windows_selector::unselect() {
+		return this->focused;
+	}
+
 	// class engine : private
 	void engine::init_thread(std::function<void(std::mutex&)> cb) {
 		// "this" capturing like this->, so other local variables (but not "cb"?)
@@ -101,15 +126,22 @@ namespace engine {
 			mutex.unlock();
 		});
 
+//		this->ws = new windows_selector(this->div);
+		this->init_thread([this](std::mutex& mutex) {
+			mutex.lock();
+			//if() this->ws.list_up();
+			//else if() this->ws.list_up();
+			//else if() this->select();
+			//else if() this->unselect();
+			mutex.unlock();
+		});
 		// Rendering(main) thread
 		while(this->is_working) {
 			this->mutex.lock();
 
-			//erase();
 			this->div->print();
 
 			doupdate();
-//			refresh();
 
 			this->mutex.unlock();
 
@@ -136,6 +168,7 @@ namespace engine {
 			delete t;
 		}
 
+//		delete this->ws;
 		delete this->div;
 	}
 }

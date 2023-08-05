@@ -50,7 +50,7 @@ void window::refresh_size() {
 
 	this->width  = nw;
 	this->height = nh;
-};
+}
 
 window::window(const styles::styles& style) {
 	this->style = style;
@@ -59,20 +59,23 @@ window::window(const styles::styles& style) {
 	if(!this->handle) throw std::runtime_error("Handle creating have failed");
 
 	this->refresh_size();
-};
+}
 window::~window() {
 	delwin(this->handle);
 
 	if(this->parent) this->parent->remove(this);
 	this->parent = nullptr;
-};
+}
 
 int window::get_width() const {
 	return width;
-};
+}
 int window::get_height() const {
 	return height;
-};
+}
+win_type window::get_type() const {
+	return this->type;
+}
 
 void window::clear() {
 	werase(this->handle);

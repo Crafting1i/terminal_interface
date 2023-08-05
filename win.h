@@ -10,6 +10,10 @@ class window;
 class div;
 class p;
 
+enum win_type {
+	wt_none, wt_div, wt_p, wt_progress
+};
+
 class window {
 	friend class div;
 protected:
@@ -20,10 +24,10 @@ protected:
 	bool is_focus = false;
 
 	uint32_t ppadding_x = 0, ppadding_y = 0;
+	win_type type = wt_none;
 public:
 	styles::styles style;
 	std::function<void()> callback;
-
 protected:
 	void rewrite_parent(div* parent);
 	void color_win();
@@ -37,6 +41,7 @@ public:
 
 	int get_width() const;
 	int get_height() const;
+	win_type get_type() const;
 
 	void set_parent();
 
@@ -48,6 +53,9 @@ public:
 };
 
 class div : public window {
+protected:
+	win_type type = win_type::wt_div;
+
 private:
 	std::vector<window*> children;
 
@@ -65,6 +73,9 @@ public:
 };
 
 class p : public window {
+protected:
+	win_type type = win_type::wt_p;
+
 public:
 	std::string inner_text;
 
@@ -79,6 +90,9 @@ public:
 };
 
 class progress : public window {
+protected:
+	win_type type = win_type::wt_progress;
+
 public:
 	long long max = 100, min = 0, value = 0;
 	char fill = '#';
