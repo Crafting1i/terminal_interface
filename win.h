@@ -24,7 +24,7 @@ protected:
 	bool is_focus = false;
 
 	uint32_t ppadding_x = 0, ppadding_y = 0;
-	win_type type = wt_none;
+	const win_type type = wt_none;
 public:
 	styles::styles style;
 	std::function<void()> callback;
@@ -54,7 +54,7 @@ public:
 
 class div : public window {
 protected:
-	win_type type = win_type::wt_div;
+	const win_type type = win_type::wt_div;
 
 private:
 	std::vector<window*> children;
@@ -74,7 +74,7 @@ public:
 
 class p : public window {
 protected:
-	win_type type = win_type::wt_p;
+	const win_type type = win_type::wt_p;
 
 public:
 	std::string inner_text;
@@ -91,7 +91,7 @@ public:
 
 class progress : public window {
 protected:
-	win_type type = win_type::wt_progress;
+	const win_type type = win_type::wt_progress;
 
 public:
 	long long max = 100, min = 0, value = 0;

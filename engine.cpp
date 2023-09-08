@@ -39,7 +39,7 @@ namespace engine {
 	// class engine : private
 	void engine::init_thread(std::function<void(std::mutex&)> cb) {
 		// "this" capturing like this->, so other local variables (but not "cb"?)
-		std::thread* t = new std::thread([this, &cb]() {
+		std::thread t ([this, &cb]() {
 			while(this->is_working) {
 				cb(this->mutex);
 
@@ -47,7 +47,7 @@ namespace engine {
 			}
 		});
 
-		this->threads.push_back(t);
+		t.detach();
 	}
 
 	// class engine : public
@@ -128,12 +128,12 @@ namespace engine {
 
 //		this->ws = new windows_selector(this->div);
 		this->init_thread([this](std::mutex& mutex) {
-			mutex.lock();
+			//mutex.lock();
 			//if() this->ws.list_up();
 			//else if() this->ws.list_up();
 			//else if() this->select();
 			//else if() this->unselect();
-			mutex.unlock();
+			//mutex.unlock();
 		});
 		// Rendering(main) thread
 		while(this->is_working) {
@@ -157,16 +157,6 @@ namespace engine {
 		this->mutex.lock();
 		this->is_working = false;
 		this->mutex.unlock();
-
-		// Mutex still locked
-		for (auto it = this->threads.begin(); it != this->threads.end(); it = this->threads.begin()) {
-			this->threads.erase(it);
-			std::thread* t = *it;
-
-			t->join();
-
-			delete t;
-		}
 
 //		delete this->ws;
 		delete this->div;
