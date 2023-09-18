@@ -84,9 +84,9 @@ void window::clear() {
 }
 
 void window::color_win() {
-	const int TEXT_COLOR_ID = 1;
-	const int BG_COLOR_ID   = 2;
-	const int COLOR_PAIR_ID = 8;
+	const int TEXT_COLOR_ID = 6;
+	const int BG_COLOR_ID   = 7;
+	int COLOR_PAIR_ID = 8;
 
 	const int color_mask   = 0b1111'1111;
 	const int hex2bin_koef = 8;
@@ -279,7 +279,6 @@ void p::print() {
 		if(txt.length() <= content_width) txt.clear();
 		else {
 			txt = txt.substr(content_width);
-			// result += "\n";
 		}
 	}
 

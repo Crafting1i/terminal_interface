@@ -8,34 +8,9 @@
 static bool is_engine_initialized = false;
 
 // Constatnts
-static const int MAX_FPS = 30;
+static const int MAX_FPS = 15;
 
 namespace engine {
-	// class windows_selector : public
-	windows_selector::~windows_selector() {
-		this->focused = nullptr;
-	}
-
-	int windows_selector::get_selected_index() const {
-		return this->selected_index;
-	}
-	win::window* windows_selector::get_focused() const {
-		return this->focused;
-	}
-
-	win::window* windows_selector::list_up() {
-		return this->focused;
-	}
-	win::window* windows_selector::list_down() {
-		return this->focused;
-	}
-	win::window* windows_selector::select() {
-		return this->focused;
-	}
-	win::window* windows_selector::unselect() {
-		return this->focused;
-	}
-
 	// class engine : private
 	void engine::init_thread(std::function<void(std::mutex&)> cb) {
 		// "this" capturing like this->, so other local variables (but not "cb"?)
@@ -63,7 +38,7 @@ namespace engine {
 		keypad(stdscr, FALSE);
 		raw();
 		noecho();
-//		halfdelay(1); // delay 1 = 0.1 sec
+		// halfdelay(1); // delay 1 = 0.1 sec
 		nodelay(stdscr, TRUE);
 
 		curs_set(0);
@@ -79,62 +54,50 @@ namespace engine {
 	void engine::start() {
 		this->is_working = true;
 
-		int key_c = -1;
-		int a_key_c = -1;
-		//int spec1_key_c = -1;
-		//int spec2_key_c = -1;
+		keys_table::key key_pressed, key_esc = "\u001B";
 
-		this->on_key_pressed([&key_c, &a_key_c](int k_code, int a_code, int s1_code, int s2_code) {
-			key_c = k_code;
-			a_key_c = a_code;
+		this->ws = new windows_selector(this->div);
+		this->on_key_pressed([this, &key_pressed](const keys_table::key& key) {
+			key_pressed = key;
+			if(key) this->ws->update(key);
 		});
 
 		// Key press event thread
 		this->init_thread([this](std::mutex& mutex) {
-			int key_code        = getch();
-			int additional_code = -1;
-			int special1_code   = -1;
-			int special2_code   = -1;
-
-			if(key_code != -1) {
-				additional_code = getch();
-			}
-			if(additional_code != -1) {
-				special1_code = getch();
-			}
-			if(special1_code != -1) {
-				special2_code = getch();
-			}
-
-			if(special2_code != -1 && (special2_code == key_code || special2_code == additional_code || special2_code == special1_code)) {
-				ungetch(special2_code);
-				special2_code = -1;
-			}
-			if(special1_code != -1 && (special1_code == key_code || special1_code == additional_code)) {
-				ungetch(special1_code);
-				special1_code = -1;
-			}
-			if(additional_code != -1 && additional_code == key_code) {
-				ungetch(additional_code);
-				additional_code = -1;
-			}
-
 			mutex.lock();
+			char code1 = getch();
+			char code2 = -1;
+			char code3 = -1;
+			char code4 = -1;
+
+			if(code1 != -1) {
+				code2 = getch();
+				if (code2 == code1) {
+				ungetch(code2);
+				code2 = -1;
+			}
+			}
+			if(code2 != -1) {
+				code3 = getch();
+				if(code3 == code1 || code3 == code2) {
+					ungetch(code3);
+					code3 = -1;
+				}
+			}
+			if(code3 != -1) {
+				code4 = getch();
+				if(code4 == code1 || code4 == code2 || code4 == code3) {
+					ungetch(code4);
+					code4 = -1;
+				}
+			}
+			
 			// !ATTANTION! Here should calls engine::stop(), and mutex are locked here
-			this->on_key_pressed.call(key_code, additional_code, special1_code, special2_code);
+			this->on_key_pressed.call({ code1, code2, code3, code4 });
 
 			mutex.unlock();
 		});
 
-//		this->ws = new windows_selector(this->div);
-		this->init_thread([this](std::mutex& mutex) {
-			//mutex.lock();
-			//if() this->ws.list_up();
-			//else if() this->ws.list_up();
-			//else if() this->select();
-			//else if() this->unselect();
-			//mutex.unlock();
-		});
 		// Rendering(main) thread
 		while(this->is_working) {
 			this->mutex.lock();
@@ -145,7 +108,8 @@ namespace engine {
 
 			this->mutex.unlock();
 
-			if (key_c == utility::K_KEYS::KK_ESC && a_key_c == -1) this->stop();
+			auto key_it = keys_table::KEYS.find("ESC");
+			if (key_it != keys_table::KEYS.end() && key_it->second == key_pressed) this->stop();
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / MAX_FPS));
 		}
 
@@ -158,7 +122,39 @@ namespace engine {
 		this->is_working = false;
 		this->mutex.unlock();
 
-//		delete this->ws;
+		//delete this->ws;
 		delete this->div;
+	}
+
+	// class windows_selector : public
+	windows_selector::~windows_selector() {
+		this->focused = nullptr;
+	}
+
+	int windows_selector::get_selected_index() const {
+		return this->selected_index;
+	}
+	win::window* windows_selector::get_focused() const {
+		return this->focused;
+	}
+	void windows_selector::update(const keys_table::key& key) {
+		if(key == this->key_arrow_up) this->list_up();
+		if(key == this->key_arrow_down) this->list_down();
+		if(key == this->key_enter) this->select();
+		if(key == this->key_backspace) this->unselect();
+	}
+
+	// class windows_selector : private
+	win::window* windows_selector::list_up() {
+		return this->focused;
+	}
+	win::window* windows_selector::list_down() {
+		return this->focused;
+	}
+	win::window* windows_selector::select() {
+		return this->focused;
+	}
+	win::window* windows_selector::unselect() {
+		return this->focused;
 	}
 }

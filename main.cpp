@@ -18,15 +18,8 @@
 #include <thread>
 #include <mutex>
 
-enum K_KEYS {
-	KK_ESC = 27
-};
-
 int main() {
-	int key_code = -1;
-	int additional_kcode = -1;
-	int special1_kcode = -1;
-	int special2_kcode = -1;
+	keys_table::key key { -1, -1, -1, -1 };
 
 	engine::engine engn;
 	engn.init();
@@ -39,11 +32,11 @@ int main() {
 	my_styles.height = 1;
 
 	win::p key_view_win(my_styles);
-	key_view_win.callback = [&key_view_win, &key_code, &additional_kcode, &special1_kcode, &special2_kcode]() {
-		std::string text = "Key pressed: " + std::to_string(key_code)
-			+ '(' + std::to_string(additional_kcode) + ')'
-			+ '(' + std::to_string(special1_kcode) + ')'
-			+ '(' + std::to_string(special2_kcode) + ')';
+	key_view_win.callback = [&key_view_win, &key]() {
+		std::string text = "Key pressed: " + std::to_string(key.get_code1())
+			+ '(' + std::to_string(key.get_code2()) + ')'
+			+ '(' + std::to_string(key.get_code3()) + ')'
+			+ '(' + std::to_string(key.get_code4()) + ')';
 
 		key_view_win.inner_text = text;
 	};
@@ -66,6 +59,7 @@ int main() {
 	// Creating battery charge indicator
 	styles::styles batt_styles;
 	batt_styles.width = 25;
+	batt_styles.color = 0xFF0000;
 	batt_styles.align = styles::keywords::SK_HORIZONTAL;
 	win::div batt_level_div (batt_styles);
 
@@ -106,11 +100,8 @@ int main() {
 
 	engn.div->append(&container);
 
-	engn.on_key_pressed([&key_code, &additional_kcode, &special1_kcode, &special2_kcode] (int k_code, int a_code, int s1_code, int s2_code) {
-		key_code = k_code;
-		additional_kcode = a_code;
-		special1_kcode = s1_code;
-		special2_kcode = s2_code;
+	engn.on_key_pressed([&key] (const keys_table::key& gkey) {
+		key = gkey;
 	});
 
 	engn.start();

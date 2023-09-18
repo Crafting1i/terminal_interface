@@ -1,5 +1,6 @@
 #include "win.h"
 #include "util.h"
+#include "keys_table.h"
 
 #include <vector>
 
@@ -13,6 +14,16 @@ namespace engine {
 		win::window* focused = nullptr;
 		size_t selected_index = 0;
 		styles::styles past_styles;
+
+		keys_table::key key_arrow_up = "\u001B[A",
+			key_arrow_down = "\u001B[B", key_enter = "\u2386",
+			key_backspace = "\u0008";
+	private:
+		win::window* list_down();
+		win::window* list_up();
+		win::window* select();
+		win::window* unselect();
+
 	public:
 		explicit windows_selector(win::window* win): focused(win) {};
 		~windows_selector();
@@ -20,10 +31,7 @@ namespace engine {
 		int get_selected_index() const;
 		win::window* get_focused() const;
 
-		win::window* list_down();
-		win::window* list_up();
-		win::window* select();
-		win::window* unselect();
+		void update(const keys_table::key& key);
 	};
 
 	class engine {
@@ -35,7 +43,7 @@ namespace engine {
 		std::atomic<bool> is_working = false;
 	public:
 		win::div* div = nullptr;
-		utility::event<void, int, int, int, int> on_key_pressed;
+		utility::event<void, const keys_table::key&> on_key_pressed;
 
 	private:
 		void init_thread(std::function<void(std::mutex&)> cb);

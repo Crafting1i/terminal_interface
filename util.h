@@ -5,18 +5,6 @@
 #include <functional>
 
 namespace utility {
-	class key {
-	private:
-		char spec1, spec2, spec3, spec4;
-	public:
-		key(char s1, char s2, char s3, char s4)
-			: spec1(s1), spec2(s2), spec3(s3), spec4(s4) {}
-	};
-
-	enum K_KEYS {
-		KK_ESC = 27
-	};
-
 	double get_batt_level();
 
 	std::vector<std::string> split(const std::string& str, std::string_view pattern);
