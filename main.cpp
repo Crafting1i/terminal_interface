@@ -19,7 +19,7 @@
 #include <mutex>
 
 int main() {
-	keys_table::key key { -1, -1, -1, -1 };
+	keys::key key { -1, -1, -1, -1 };
 
 	engine::engine engn;
 	engn.init();
@@ -80,12 +80,14 @@ int main() {
 
 	my_styles.height = 2;
 	my_styles.pos_z = 1;
-//	my_styles.position = styles::keywords::SK_FIXED;
-	my_styles.margin_left = 3;
+	my_styles.position = styles::keywords::SK_FIXED;
 	win::p test_win (my_styles);
 	test_win.callback = [&test_win]() {
 		test_win.inner_text = "Hello,\n world!";
 	};
+	test_win.style.position = styles::keywords::SK_FIXED;
+	test_win.style.margin_top = 5;
+
 
 	my_styles.margin_left = 0;
 	//my_styles.margin_top = 4;
@@ -96,11 +98,11 @@ int main() {
 	container.append(&key_view_win);
 	container.append(&datetime_win);
 	container.append(&batt_level_div);
-//	container.append(&test_win);
 
 	engn.div->append(&container);
+	engn.div->append(&test_win);
 
-	engn.on_key_pressed([&key] (const keys_table::key& gkey) {
+	engn.on_key_pressed([&key] (const keys::key& gkey) {
 		key = gkey;
 	});
 

@@ -43,8 +43,8 @@ void window::refresh_size() {
 	int nw = fmin(pw + nx, style.width.get_value()  + nx) - nx;
 
 	int mvcode;
-//	if(this->parent) mvcode = mvderwin(this->handle, ny, nx);
-//	else mvcode = mvwin(this->handle, ny, nx);
+  //if(this->parent) mvcode = mvderwin(this->handle, ny, nx);
+  //else mvcode = mvwin(this->handle, ny, nx);
 	mvwin(this->handle, ny, nx);
 	wresize(this->handle, nh, nw);
 
@@ -73,8 +73,9 @@ int window::get_width() const {
 int window::get_height() const {
 	return height;
 }
-win_type window::get_type() const {
-	return this->type;
+
+div* window::get_parent() const {
+	return this->parent;
 }
 
 void window::clear() {
@@ -132,11 +133,9 @@ bool div::remove(const window* win) {
 	return true;
 };
 
-/*
 decltype(div::children) div::get_children() {
 	return std::vector<window*>(this->children);
 };
-*/
 
 void div::print() {
 	this->refresh_size();
@@ -321,6 +320,20 @@ void progress::print() {
 
 progress::~progress() {
 	this->parent = nullptr;
+}
+
+// Windows get_type() funtion defining
+win_type window::get_type() const {
+	return this->type;
+}
+win_type p::get_type() const {
+	return this->type;
+}
+win_type div::get_type() const {
+	return this->type;
+}
+win_type progress::get_type() const {
+	return this->type;
 }
 
 }

@@ -24,9 +24,9 @@ protected:
 	bool is_focus = false;
 
 	uint32_t ppadding_x = 0, ppadding_y = 0;
-	const win_type type = wt_none;
 public:
 	styles::styles style;
+	const win_type type = wt_none;
 	std::function<void()> callback;
 protected:
 	void rewrite_parent(div* parent);
@@ -41,15 +41,17 @@ public:
 
 	int get_width() const;
 	int get_height() const;
-	win_type get_type() const;
+	virtual win_type get_type() const;
 
 	void set_parent();
+	div* get_parent() const;
 
 	// Sized gots from the style
 	void refresh_size();
 
 	virtual void print() = 0;
 	virtual void clear();
+
 };
 
 class div : public window {
@@ -66,10 +68,11 @@ public:
 	void append(window* win);
 	bool remove(const window* win);
 
-	//decltype(children) get_children();
+	decltype(children) get_children();
 
 	virtual void print();
 	virtual void clear();
+	virtual win_type get_type() const;
 };
 
 class p : public window {
@@ -87,6 +90,7 @@ public:
 	virtual ~p();
 
 	virtual void print();
+	virtual win_type get_type() const;
 };
 
 class progress : public window {
@@ -102,6 +106,7 @@ public:
 	virtual ~progress();
 
 	virtual void print();
+	virtual win_type get_type() const;
 };
 
 }

@@ -1,6 +1,6 @@
 #include "win.h"
 #include "util.h"
-#include "keys_table.h"
+#include "keys.h"
 
 #include <vector>
 
@@ -15,9 +15,11 @@ namespace engine {
 		size_t selected_index = 0;
 		styles::styles past_styles;
 
-		keys_table::key key_arrow_up = "\u001B[A",
-			key_arrow_down = "\u001B[B", key_enter = "\u2386",
-			key_backspace = "\u0008";
+		const keys::key key_page_up = "\u001B[5~",
+			key_page_down = "\u001B[6~", key_insert = "\u001B[2~",
+			key_end = "\u001B[4~",
+			key_arrow_up = "\u001B[A", key_arrow_down = "\u001B[B",
+			key_arrow_right = "\u001B[C", key_arrow_left = "\u001B[D";
 	private:
 		win::window* list_down();
 		win::window* list_up();
@@ -31,7 +33,9 @@ namespace engine {
 		int get_selected_index() const;
 		win::window* get_focused() const;
 
-		void update(const keys_table::key& key);
+		void move_focused(int x, int y);
+
+		void update(const keys::key& key);
 	};
 
 	class engine {
@@ -43,7 +47,7 @@ namespace engine {
 		std::atomic<bool> is_working = false;
 	public:
 		win::div* div = nullptr;
-		utility::event<void, const keys_table::key&> on_key_pressed;
+		utility::event<void, const keys::key&> on_key_pressed;
 
 	private:
 		void init_thread(std::function<void(std::mutex&)> cb);
