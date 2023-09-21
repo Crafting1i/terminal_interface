@@ -63,7 +63,7 @@ int main() {
 	batt_styles.align = styles::keywords::SK_HORIZONTAL;
 	win::div batt_level_div (batt_styles);
 
-//	batt_styles.align = styles::keywords::SK_VERTICAL;
+  //batt_styles.align = styles::keywords::SK_VERTICAL;
 	batt_styles.width = 20;
 	win::progress batt_progress(batt_styles);
 	batt_progress.callback = [&batt_progress]() {
@@ -87,13 +87,18 @@ int main() {
 	};
 	test_win.style.position = styles::keywords::SK_FIXED;
 	test_win.style.margin_top = 5;
+	test_win.style.color = 0x00FFFF;
 
 
 	my_styles.margin_left = 0;
 	//my_styles.margin_top = 4;
 	my_styles.height = 10;
 	my_styles.width  = 40;
+	
 	win::div container (my_styles);
+	// container.style.color = 0x00FFFF;
+	// container.style.height = 10;
+	// container.style.width = 40;
 
 	container.append(&key_view_win);
 	container.append(&datetime_win);

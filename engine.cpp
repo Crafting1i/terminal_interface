@@ -129,6 +129,30 @@ namespace engine {
 	}
 
 	// class windows_selector : public
+	windows_selector::windows_selector(win::window* win): focused(win) {
+		this->info = new win::p();
+		//this->info->style.align = styles::keywords::SK_RIGHT;
+		this->info->style.position = styles::keywords::SK_FIXED;
+		this->info->style.width = 8;
+		this->info->style.height = 2;
+		this->info->style.margin_left = this->focused->get_width() - 8;
+		this->info->style.autotrim = false;
+		this->info->style.is_moveble = false;
+
+		this->info->callback = [this]() {
+			win::win_type win_type = this->focused->get_type();
+			this->info->inner_text = std::to_string(this->selected_index + 1) + '/' + std::to_string(this->focused_children_size);
+			this->info->inner_text += '\n' + std::string(
+					win_type == win::win_type::wt_div ? "div"
+					: win_type == win::win_type::wt_p ? "p"
+					: win_type == win::win_type::wt_progress ? "progress"
+					: "unknown"
+				);
+		};
+
+		dynamic_cast<win::div*>(this->focused)->append(this->info);
+		this->focused_children_size = dynamic_cast<win::div*>(this->focused)->get_children().size();
+	}
 	windows_selector::~windows_selector() {
 		this->focused = nullptr;
 	}
@@ -140,16 +164,14 @@ namespace engine {
 		return this->focused;
 	}
 	void windows_selector::update(const keys::key& key) {
-		//mvprintw(11, 10, "%i", this->focused->style.position == styles::keywords::SK_FIXED);
-		
 		if(key == this->key_page_up) return (void)this->list_up();
 		if(key == this->key_page_down) return (void)this->list_down();
 		if(key == this->key_insert) return (void)this->select();
 		if(key == this->key_end) return (void)this->unselect();
 
 		if(this->focused->style.position != styles::keywords::SK_FIXED) return;
-		mvprintw(8, 10, "%c%c%c%c", key.get_code1(), key.get_code2(), key.get_code3(), key.get_code4());
-		mvprintw(9, 10, "%c%c%c%c", key_arrow_up.get_code1(), key_arrow_up.get_code2(), key_arrow_up.get_code3(), key_arrow_up.get_code4());
+		if(!this->focused->style.is_moveble) return;
+
 		if(key == this->key_arrow_up) this->move_focused(0, 1);
 		if(key == this->key_arrow_down) this->move_focused(0, -1);
 		if(key == this->key_arrow_right) this->move_focused(1, 0);
@@ -161,15 +183,15 @@ namespace engine {
 			throw std::logic_error("'this->focused->style.position' is not 'SK_FIXED'");
 		
 		this->focused->clear();
-		this->focused->style.margin_top -= y;
-		this->focused->style.margin_left += x;
 		
-		if(this->focused->style.margin_top < 0)
+		if(this->focused->style.margin_top > y && y < 0)
 			this->focused->style.margin_top = 0;
-		if(this->focused->style.margin_left < 0)
+		else this->focused->style.margin_top -= y;
+		if(this->focused->style.margin_left < x && x < 0)
 			this->focused->style.margin_left = 0;
+		else this->focused->style.margin_left += x;
 
-		mvprintw(12, 10, "%ui %ui", this->focused->style.margin_top, this->focused->style.margin_left);
+		mvprintw(12, 10, "%u %u", this->focused->style.margin_top, this->focused->style.margin_left);
 	}
 
 	// class windows_selector : private
@@ -193,6 +215,8 @@ namespace engine {
 		if(this->selected_index == 0) this->selected_index = children.size() - 1;
 		else this->selected_index -= 1;
 		
+		mvprintw(10, 10, "%zu/%zu", this->selected_index, children.size());
+
 		return this->focused;
 	}
 	win::window* windows_selector::select() {
@@ -201,13 +225,18 @@ namespace engine {
 
 		auto children = dynamic_cast<win::div*>(this->focused)->get_children();
 		this->focused = children[this->selected_index];
+		this->selected_index = 0;
 
-		this->focused->style.background_color |= 0xFFFFFF;
+		if(this->focused->get_type() == win::win_type::wt_div)
+			this->focused_children_size = dynamic_cast<win::div*>(this->focused)->get_children().size();
+		else this->focused_children_size = 0;
+
 		return this->focused;
 	}
 	win::window* windows_selector::unselect() {
-		if(this->focused->get_parent()) {
-			this->focused->style.background_color |= 0xFFFFFF;
+		if(this->focused->get_parent() != nullptr) {
+			this->selected_index = 0;
+			this->focused_children_size = this->focused->get_parent()->get_children().size();
 			this->focused = dynamic_cast<win::window*>(this->focused->get_parent());
 		}
 

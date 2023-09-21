@@ -85,9 +85,10 @@ void window::clear() {
 }
 
 void window::color_win() {
-	const int TEXT_COLOR_ID = 6;
-	const int BG_COLOR_ID   = 7;
-	int COLOR_PAIR_ID = 8;
+	if(!COLORS) return;
+	const int TEXT_COLOR_ID = COLORS - 3;
+	const int BG_COLOR_ID   = COLORS - 2;
+	int COLOR_PAIR_ID       = COLORS - 1;
 
 	const int color_mask   = 0b1111'1111;
 	const int hex2bin_koef = 8;
@@ -145,11 +146,8 @@ void div::print() {
 	});
 
 	int padding_y, padding_x;
-	int abs_padding_y, abs_padding_x;
 	// Закостылила, надо как-то будет это исправить. см. window::refresh_size()
-	getbegyx(this->handle, abs_padding_y, abs_padding_x);
-	padding_y = abs_padding_y;
-	padding_x = abs_padding_x;
+	getbegyx(this->handle, padding_y, padding_x);
 
 	for(window* win : this->children) {
 		if(!win->parent) continue;
@@ -257,7 +255,7 @@ void p::print() {
 	int content_height = this->height - style.padding_top - style.padding_bottom;
 
 	std::string txt = (style.autotrim) ? utility::trim(this->inner_text) : this->inner_text;
-	txt = std::regex_replace(txt, std::regex("\\a|\\b|\\f|\\n|\\r|\\t|\\v"), "");
+	if(style.autotrim) txt = std::regex_replace(txt, std::regex("\\a|\\b|\\f|\\n|\\r|\\t|\\v"), "");
 
 	std::string result = "";
 

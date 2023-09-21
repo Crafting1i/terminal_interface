@@ -1,5 +1,6 @@
 #include <string>
 #include <cstring>
+#include <stdexcept>
 
 namespace keys {
   class key {

@@ -9,7 +9,7 @@ win.o: win.cpp win.h styles.h
 	clang++ -c win.cpp --std=c++17
 util.o: util.cpp util.h
 	clang++ -c util.cpp --std=c++17
-engine.o: engine.cpp engine.h
+engine.o: engine.cpp engine.h keys.h
 	clang++ -c engine.cpp --std=c++17
 
 clean:

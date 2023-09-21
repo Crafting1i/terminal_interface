@@ -64,6 +64,7 @@ public:
 	}
 };
 
+
 class styles {
 public:
 	styles() {};
@@ -82,10 +83,12 @@ public:
 
 	bool autotrim = true;
 	bool is_visible = true;
+	bool is_moveble = true;
 
 	keywords text_align = keywords::SK_LEFT; // left, right, center
 	keywords position = keywords::SK_STATIC;
 	keywords align = keywords::SK_VERTICAL;
 };
+
 
 }
