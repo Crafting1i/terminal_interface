@@ -85,31 +85,17 @@ void window::clear() {
 }
 
 void window::color_win() {
-	if(!COLORS) return;
-	const int TEXT_COLOR_ID = COLORS - 3;
-	const int BG_COLOR_ID   = COLORS - 2;
-	int COLOR_PAIR_ID       = COLORS - 1;
+	if(!can_change_color()) return;
 
-	const int color_mask   = 0b1111'1111;
-	const int hex2bin_koef = 8;
-
-	init_color(
-		TEXT_COLOR_ID,
-		1000 * ((style.color >> (hex2bin_koef * 2)) & color_mask) / 255,
-		1000 * ((style.color >>  hex2bin_koef)      & color_mask) / 255,
-		1000 * (style.color                         & color_mask) / 255
-	);
-
-	init_color(
-		BG_COLOR_ID,
-		1000 * ((style.background_color >> (hex2bin_koef * 2)) & color_mask) / 255,
-		1000 * ((style.background_color >>  hex2bin_koef)      & color_mask) / 255,
-		1000 * (style.background_color                         & color_mask) / 255
-
-	);
-	init_pair(COLOR_PAIR_ID, TEXT_COLOR_ID, BG_COLOR_ID);
-
-	wattrset(this->handle, COLOR_PAIR(COLOR_PAIR_ID));
+	// init_color(
+	// 	TEXT_COLOR_ID,
+	// 	1000 * ((style.color >> (hex2bin_koef * 2)) & color_mask) / 255,
+	// 	1000 * ((style.color >>  hex2bin_koef)      & color_mask) / 255,
+	// 	1000 * (style.color                         & color_mask) / 255
+	// );
+	auto pair = style.color_pair;
+	for(auto filter : style.color_pair_filters) pair |= filter;
+	wattrset(this->handle, pair);
 }
 
 // class div : public
@@ -148,6 +134,13 @@ void div::print() {
 	int padding_y, padding_x;
 	// Закостылила, надо как-то будет это исправить. см. window::refresh_size()
 	getbegyx(this->handle, padding_y, padding_x);
+	for(size_t i = 0; i < height; i += 1) {
+		for(size_t j = 0; j < width; j += 1) {
+      mvwaddch(this->handle, i, j, ' ');
+    }
+	}
+	this->color_win();
+	wnoutrefresh(this->handle);
 
 	for(window* win : this->children) {
 		if(!win->parent) continue;
@@ -255,12 +248,14 @@ void p::print() {
 	int content_height = this->height - style.padding_top - style.padding_bottom;
 
 	std::string txt = (style.autotrim) ? utility::trim(this->inner_text) : this->inner_text;
-	if(style.autotrim) txt = std::regex_replace(txt, std::regex("\\a|\\b|\\f|\\n|\\r|\\t|\\v"), "");
+	txt = std::regex_replace(txt, std::regex("\\a|\\b|\\f|\\n|\\r|\\t|\\v"), "");
 
 	std::string result = "";
 
-	for (int i = 0; i < content_height && txt.length(); i += 1) {
-		std::string line = txt.substr(0, content_width);
+	for (int i = 0; i < content_height /* && txt.length()*/; i += 1) {
+		//std::string line = txt.substr(0, content_width);
+		std::string line;
+		if(txt.length()) line = txt.substr(0, content_width);
 
 		for (int i = 0; i < style.padding_left; i += 1) {
 			line = ' ' + line;

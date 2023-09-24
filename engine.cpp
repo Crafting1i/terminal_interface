@@ -4,6 +4,7 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+#include <vector>
 
 // Global Variables
 static bool is_engine_initialized = false;
@@ -33,6 +34,7 @@ namespace engine {
 
 		initscr();
 		start_color();
+		use_default_colors();
 
 		intrflush(stdscr, FALSE);
 		scrollok(stdscr, TRUE);
@@ -132,22 +134,22 @@ namespace engine {
 	windows_selector::windows_selector(win::window* win): focused(win) {
 		this->info = new win::p();
 		//this->info->style.align = styles::keywords::SK_RIGHT;
-		this->info->style.position = styles::keywords::SK_FIXED;
-		this->info->style.width = 8;
-		this->info->style.height = 2;
-		this->info->style.margin_left = this->focused->get_width() - 8;
-		this->info->style.autotrim = false;
+		//this->info->style.position = styles::keywords::SK_FIXED;
+		this->info->style.width = styles::s_digit(100, styles::digit_type::DT_PERCENT);
+		this->info->style.height = 1;
+		//this->info->style.margin_left = this->focused->get_width() - 8;
+		//this->info->style.autotrim = false;
 		this->info->style.is_moveble = false;
 
 		this->info->callback = [this]() {
 			win::win_type win_type = this->focused->get_type();
 			this->info->inner_text = std::to_string(this->selected_index + 1) + '/' + std::to_string(this->focused_children_size);
-			this->info->inner_text += '\n' + std::string(
+			this->info->inner_text += '(' + std::string(
 					win_type == win::win_type::wt_div ? "div"
 					: win_type == win::win_type::wt_p ? "p"
 					: win_type == win::win_type::wt_progress ? "progress"
 					: "unknown"
-				);
+				) + ')';
 		};
 
 		dynamic_cast<win::div*>(this->focused)->append(this->info);
@@ -155,6 +157,7 @@ namespace engine {
 	}
 	windows_selector::~windows_selector() {
 		this->focused = nullptr;
+		delete this->info;
 	}
 
 	int windows_selector::get_selected_index() const {
@@ -170,12 +173,12 @@ namespace engine {
 		if(key == this->key_end) return (void)this->unselect();
 
 		if(this->focused->style.position != styles::keywords::SK_FIXED) return;
-		if(!this->focused->style.is_moveble) return;
+		else if(!this->focused->style.is_moveble) return;
 
 		if(key == this->key_arrow_up) this->move_focused(0, 1);
-		if(key == this->key_arrow_down) this->move_focused(0, -1);
-		if(key == this->key_arrow_right) this->move_focused(1, 0);
-		if(key == this->key_arrow_left) this->move_focused(-1, 0);
+		else if(key == this->key_arrow_down) this->move_focused(0, -1);
+		else if(key == this->key_arrow_right) this->move_focused(1, 0);
+		else if(key == this->key_arrow_left) this->move_focused(-1, 0);
 	}
 
 	void windows_selector::move_focused(int x, int y) {
@@ -187,11 +190,11 @@ namespace engine {
 		if(this->focused->style.margin_top > y && y < 0)
 			this->focused->style.margin_top = 0;
 		else this->focused->style.margin_top -= y;
-		if(this->focused->style.margin_left < x && x < 0)
+		if(this->focused->style.margin_left > x && x < 0)
 			this->focused->style.margin_left = 0;
 		else this->focused->style.margin_left += x;
 
-		mvprintw(12, 10, "%u %u", this->focused->style.margin_top, this->focused->style.margin_left);
+		//mvprintw(12, 10, "%u %u", this->focused->style.margin_top, this->focused->style.margin_left);
 	}
 
 	// class windows_selector : private
@@ -203,7 +206,7 @@ namespace engine {
 		if(this->selected_index + 1 == children.size()) this->selected_index = 0;
 		else this->selected_index += 1;
 		
-		mvprintw(10, 10, "%zu/%zu", this->selected_index, children.size());
+		//mvprintw(10, 10, "%zu/%zu", this->selected_index, children.size());
 
 		return this->focused;
 	}
@@ -215,7 +218,7 @@ namespace engine {
 		if(this->selected_index == 0) this->selected_index = children.size() - 1;
 		else this->selected_index -= 1;
 		
-		mvprintw(10, 10, "%zu/%zu", this->selected_index, children.size());
+		//mvprintw(10, 10, "%zu/%zu", this->selected_index, children.size());
 
 		return this->focused;
 	}
@@ -223,9 +226,12 @@ namespace engine {
 		if(this->focused->get_type() != win::win_type::wt_div)
 			return this->focused;
 
+		this->focused->style.color_pair_filters.erase(A_REVERSE);
 		auto children = dynamic_cast<win::div*>(this->focused)->get_children();
 		this->focused = children[this->selected_index];
 		this->selected_index = 0;
+
+		this->focused->style.color_pair_filters.insert(A_REVERSE);
 
 		if(this->focused->get_type() == win::win_type::wt_div)
 			this->focused_children_size = dynamic_cast<win::div*>(this->focused)->get_children().size();
@@ -234,10 +240,15 @@ namespace engine {
 		return this->focused;
 	}
 	win::window* windows_selector::unselect() {
+		this->focused->style.color_pair_filters.erase(A_REVERSE);
+		
 		if(this->focused->get_parent() != nullptr) {
 			this->selected_index = 0;
 			this->focused_children_size = this->focused->get_parent()->get_children().size();
 			this->focused = dynamic_cast<win::window*>(this->focused->get_parent());
+			
+			if(this->focused->get_parent() != nullptr)
+				this->focused->style.color_pair_filters.insert(A_REVERSE);
 		}
 
 		return this->focused;

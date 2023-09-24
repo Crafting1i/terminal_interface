@@ -18,7 +18,7 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "/home/amesu/cpp/terminal_interface/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -27,8 +27,17 @@
             ],
             "cStandard": "c17",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "linux-gcc-x64",
-            "compilerPath": "C:/msys64/mingw64/bin/g++.exe"
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerPath": "/usr/bin/clang",
+            "compilerPathInCppPropertiesJson": "C:/msys64/mingw64/bin/g++.exe",
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "/home/amesu/cpp/terminal_interface/**",
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
         }
     ],
     "version": 4

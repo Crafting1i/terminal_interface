@@ -1,4 +1,4 @@
 # Ignore builds
 dist/*
 *.o
-./interface
+interface
