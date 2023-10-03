@@ -9,16 +9,18 @@
 #include <algorithm>
 #include <regex>
 
+//#include <tcl.h>
+
 namespace win {
 // class window : protected
 void window::rewrite_parent(div* parent) {
 	if(this->parent) this->parent->remove(this);
 	this->parent = parent;
 
-	delwin(this->handle);
+	// delwin(this->handle);
 
-	this->handle = derwin(parent ? parent->handle : stdscr, 1, 1, 0, 0);
-	if(!this->handle) throw std::runtime_error("Handle creating have failed");
+	// this->handle = derwin(parent ? parent->handle : stdscr, 1, 1, 0, 0);
+	// if(!this->handle) throw std::runtime_error("Handle creating have failed");
 
 	this->refresh_size();
 }
@@ -39,23 +41,60 @@ void window::refresh_size() {
 	int nx = this->ppadding_x ? this->ppadding_x : fmin(style.margin_left, pw);
 	int ny = this->ppadding_y ? this->ppadding_y : fmin(style.margin_top,  ph);
 
-	int nh = fmin(ph + ny, style.height.get_value() + ny) - ny;
-	int nw = fmin(pw + nx, style.width.get_value()  + nx) - nx;
+	uint32_t style_width = this->style.width.get_type() == styles::digit_type::DT_PIXEL
+		? this->style.width.get_value() : this->style.width.get_value() * pw / 100;
+	uint32_t style_height = this->style.height.get_type() == styles::digit_type::DT_PIXEL
+		? this->style.height.get_value() : this->style.height.get_value() * ph / 100;
 
-	int mvcode;
-  //if(this->parent) mvcode = mvderwin(this->handle, ny, nx);
-  //else mvcode = mvwin(this->handle, ny, nx);
-	mvwin(this->handle, ny, nx);
-	wresize(this->handle, nh, nw);
+	uint32_t style_max_width = this->style.max_width.get_type() == styles::digit_type::DT_PIXEL
+		? this->style.max_width.get_value() : this->style.max_width.get_value() * pw / 100;
+	uint32_t style_max_height = this->style.max_height.get_type() == styles::digit_type::DT_PIXEL
+		? this->style.max_height.get_value() : this->style.max_height.get_value() * ph / 100;
 
-	this->width  = nw;
-	this->height = nh;
+	uint32_t style_min_width = this->style.min_width.get_type() == styles::digit_type::DT_PIXEL
+		? this->style.min_width.get_value() : this->style.min_width.get_value() * pw / 100;
+	uint32_t style_min_height = this->style.min_height.get_type() == styles::digit_type::DT_PIXEL
+		? this->style.min_height.get_value() : this->style.min_height.get_value() * ph / 100;
+
+	this->height = fmin(
+		fmax(style_height, style_min_height),
+		fmin(ph - ppadding_y, style_max_height)
+	);
+	this->width = fmin(
+		fmax(style_width, style_min_width),
+		fmin(pw - ppadding_x, style_max_width)
+	);
+
+
+
+	//! Вонючие вы винючки, чтобы вас всех поразило бессилие!
+	// int err = wresize(this->handle, nh, nw);
+	// int err1 = mvwin(this->handle, ny, nx);
+	// if(err != OK) {
+	// 	mvprintw(17, 15, "Can't resize window: %s", strerror(errno));
+	// 	void* obj = malloc(1024 * 1024 * 5);
+	// 	if(obj) {
+	// 		free(obj);
+	// 	} else {
+	// 		mvprintw(20, 15, "Can't alloc mem: %s", strerror(errno));
+	// 	}
+	// }
+	if(cwidth == width && cheight == height && cx == nx && cy == ny) return;
+	if ((cx != nx || cy != ny) && cwidth == width && cheight == height)
+		return (void)mvwin(this->handle, cy = ny, cx = nx);
+	delwin(this->handle);
+	this->handle = newwin(this->height, this->width, ny, nx);
+
+	this->cx = nx;
+	this->cy = ny;
+	this->cwidth  = this->width;
+	this->cheight = this->height;
 }
 
 window::window(const styles::styles& style) {
 	this->style = style;
 
-	this->handle = newwin(0, 0, 0, 0);
+	this->handle = newwin(1, 1, 0, 0);
 	if(!this->handle) throw std::runtime_error("Handle creating have failed");
 
 	this->refresh_size();
@@ -67,11 +106,14 @@ window::~window() {
 	this->parent = nullptr;
 }
 
-int window::get_width() const {
+uint32_t window::get_width() const {
 	return width;
 }
-int window::get_height() const {
+uint32_t window::get_height() const {
 	return height;
+}
+WINDOW* window::get_handle() const {
+	return handle;
 }
 
 div* window::get_parent() const {
@@ -125,13 +167,13 @@ decltype(div::children) div::get_children() {
 };
 
 void div::print() {
-	this->refresh_size();
+	//this->refresh_size();
 
 	std::sort(this->children.begin(), this->children.end(), [](const window* win1, const window* win2) {
 		return win1->style.pos_z < win2->style.pos_z && win2->style.position != styles::keywords::SK_STATIC;
 	});
 
-	int padding_y, padding_x;
+	uint32_t padding_y, padding_x;
 	// Закостылила, надо как-то будет это исправить. см. window::refresh_size()
 	getbegyx(this->handle, padding_y, padding_x);
 	for(size_t i = 0; i < height; i += 1) {
@@ -159,30 +201,29 @@ void div::print() {
 			// "Not above then (this->height - paddding_y), style.max_height
 			// and not less then style.min_height"
 			// style.max_height have priority
-			uint32_t style_width = win->style.width.get_type() == styles::digit_type::DT_PIXEL
-				? win->style.width.get_value() : win->style.width.get_value() * this->width / 100;
-			uint32_t style_height = win->style.height.get_type() == styles::digit_type::DT_PIXEL
-				? win->style.height.get_value() : win->style.height.get_value() * this->height / 100;
+			// uint32_t style_width = win->style.width.get_type() == styles::digit_type::DT_PIXEL
+			// 	? win->style.width.get_value() : win->style.width.get_value() * this->width / 100;
+			// uint32_t style_height = win->style.height.get_type() == styles::digit_type::DT_PIXEL
+			// 	? win->style.height.get_value() : win->style.height.get_value() * this->height / 100;
 
-			uint32_t style_max_width = win->style.max_width.get_type() == styles::digit_type::DT_PIXEL
-				? win->style.max_width.get_value() : win->style.max_width.get_value() * this->width / 100;
-			uint32_t style_max_height = win->style.max_height.get_type() == styles::digit_type::DT_PIXEL
-				? win->style.max_height.get_value() : win->style.max_height.get_value() * this->height / 100;
+			// uint32_t style_max_width = win->style.max_width.get_type() == styles::digit_type::DT_PIXEL
+			// 	? win->style.max_width.get_value() : win->style.max_width.get_value() * this->width / 100;
+			// uint32_t style_max_height = win->style.max_height.get_type() == styles::digit_type::DT_PIXEL
+			// 	? win->style.max_height.get_value() : win->style.max_height.get_value() * this->height / 100;
 
-			uint32_t style_min_width = win->style.min_width.get_type() == styles::digit_type::DT_PIXEL
-				? win->style.min_width.get_value() : win->style.min_width.get_value() * this->width / 100;
-			uint32_t style_min_height = win->style.min_height.get_type() == styles::digit_type::DT_PIXEL
-				? win->style.min_height.get_value() : win->style.min_height.get_value() * this->height / 100;
+			// uint32_t style_min_width = win->style.min_width.get_type() == styles::digit_type::DT_PIXEL
+			// 	? win->style.min_width.get_value() : win->style.min_width.get_value() * this->width / 100;
+			// uint32_t style_min_height = win->style.min_height.get_type() == styles::digit_type::DT_PIXEL
+			// 	? win->style.min_height.get_value() : win->style.min_height.get_value() * this->height / 100;
 
-			win->height = fmin(
-				fmax(style_height, style_min_height),
-				fmin(this->height - padding_y, style_max_height)
-			);
-			win->width = fmin(
-				fmax(style_width, style_min_width),
-				fmin(this->width - padding_x, style_max_width)
-			);
-
+			// win->height = fmin(
+			// 	fmax(style_height, style_min_height),
+			// 	fmin(this->height - padding_y, style_max_height)
+			// );
+			// win->width = fmin(
+			// 	fmax(style_width, style_min_width),
+			// 	fmin(this->width - padding_x, style_max_width)
+			// );
 
 			if(this->style.align == styles::keywords::SK_VERTICAL)
 				padding_y += win->height + win->style.margin_bottom;
@@ -236,13 +277,15 @@ std::string p::align_line(std::string& line, int width) {
 // class p : public
 void p::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
-	this->refresh_size();
+	//this->refresh_size();
 
 	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
 		werase(this->handle);
 		wnoutrefresh(this->handle);
 		return;
 	}
+	int x, y;
+	getmaxyx(this->handle, y, x);
 
 	int content_width  = this->width  - style.padding_left - style.padding_right;
 	int content_height = this->height - style.padding_top - style.padding_bottom;
@@ -284,7 +327,7 @@ void p::print() {
 //class progress : public
 void progress::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
-	this->refresh_size();
+	//this->refresh_size();
 
 	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
 		werase(this->handle);

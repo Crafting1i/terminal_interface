@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cmake",
+			"label": "CMake: настроить",
+			"command": "configure",
+			"problemMatcher": [],
+			"detail": "Задача шаблона CMake настроить",
+			"group": "build"
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: тест",
+			"command": "test",
+			"problemMatcher": [],
+			"detail": "Задача шаблона CMake тест",
+			"group": "build"
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: сборка",
+			"command": "build",
+			"targets": [
+				"${fileDirectory}/Makefile"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"detail": "Задача шаблона CMake сборка"
+		}
+	]
+}

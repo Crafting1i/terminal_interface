@@ -17,7 +17,9 @@ enum win_type {
 class window {
 	friend class div;
 protected:
-	int width, height;
+	uint32_t cwidth, cheight, cx, cy; //! c = computed
+	uint32_t width = -1, height = -1;
+
 	WINDOW* handle = nullptr;
 	div* parent = nullptr;
 
@@ -39,9 +41,10 @@ public:
 	window(const styles::styles& style = {});
 	virtual ~window();
 
-	int get_width() const;
-	int get_height() const;
+	uint32_t get_width() const;
+	uint32_t get_height() const;
 	virtual win_type get_type() const;
+	WINDOW* get_handle() const;
 
 	void set_parent();
 	div* get_parent() const;

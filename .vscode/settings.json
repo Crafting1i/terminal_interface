@@ -58,6 +58,18 @@
     "stop_token": "cpp",
     "streambuf": "cpp",
     "thread": "cpp",
-    "typeinfo": "cpp"
-  }
+    "typeinfo": "cpp",
+    "unordered_set": "cpp",
+    "fstream": "cpp"
+  },
+  "makefile.launchConfigurations": [
+    {
+      "cwd": "/home/amesu/cpp/terminal_interface",
+      "binaryPath": "/home/amesu/cpp/terminal_interface/interface",
+      "binaryArgs": []
+    }
+  ],
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.cmakePath": "cmake",
+  "cmake.sourceDirectory": "/home/amesu/cpp/terminal_interface"
 }

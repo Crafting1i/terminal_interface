@@ -1,4 +1,5 @@
 # Ignore builds
-dist/*
-*.o
-interface
+dist
+build
+# Variable Enviroments
+.env

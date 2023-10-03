@@ -45,22 +45,21 @@ namespace engine {
 		std::mutex mutex;
 		std::vector<std::thread*> threads;
 		windows_selector* ws = nullptr;
+		uint8_t MAX_FPS = 15;
 
 		std::atomic<bool> is_working = false;
 	public:
 		win::div* div = nullptr;
 		utility::event<void, const keys::key&> on_key_pressed;
 
-	private:
-		void init_thread(std::function<void(std::mutex&)> cb);
-
 	public:
 		engine() {};
 
 		void init();
 		void start();
-
 		void stop();
+		
+		void init_thread(std::function<void(std::mutex&)> cb, uint32_t timeout = (uint32_t)(-1));
 	};
 }
 

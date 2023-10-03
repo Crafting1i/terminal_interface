@@ -10,17 +10,18 @@
 static bool is_engine_initialized = false;
 
 // Constatnts
-static const int MAX_FPS = 15;
+//static const int MAX_FPS = 15;
 
 namespace engine {
 	// class engine : private
-	void engine::init_thread(std::function<void(std::mutex&)> cb) {
+	void engine::init_thread(std::function<void(std::mutex&)> cb, uint32_t timeout_ms) {
+		if(timeout_ms == (uint32_t)(-1)) timeout_ms = 1000 / this->MAX_FPS;
 		// "this" capturing like this->, so other local variables (but not "cb"?)
-		std::thread t ([this, &cb]() {
+		std::thread t ([this, &cb, timeout_ms]() {
 			while(this->is_working) {
 				cb(this->mutex);
 
-				std::this_thread::sleep_for(std::chrono::milliseconds(1000 / MAX_FPS));
+				std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
 			}
 		});
 
@@ -107,6 +108,7 @@ namespace engine {
 		while(this->is_working) {
 			this->mutex.lock();
 
+			this->div->refresh_size();
 			this->div->print();
 
 			doupdate();
