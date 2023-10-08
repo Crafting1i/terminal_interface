@@ -233,7 +233,6 @@ void div::print() {
 			win->ppadding_x = win->style.margin_left;
 		}
 
-
 		if(win->callback) win->callback();
 		win->print();
 	}

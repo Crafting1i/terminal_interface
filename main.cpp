@@ -31,7 +31,7 @@ std::vector<size_t> get_cpu_times();
 int main() {
 	keys::key key { -1, -1, -1, -1 };
 
-	engine::engine engn;
+	engine::engine engn(3);
 	engn.init();
 
 	int scrn_height, scrn_width;
@@ -115,19 +115,22 @@ int main() {
 	sysstat_p.style.height = 2;
 	sysstat_p.style.width = 19;
 	sysstat_p.style.pos_z = 15;
-	sysstat_p.callback = [&sysstat_p, &cpu_usage]() {
-		sysstat_p.inner_text = "CPU usage: " + utility::to_string(cpu_usage, 2) + "%";
-	};
+	// sysstat_p.callback = [&sysstat_p, &cpu_usage]() {
+	// 	sysstat_p.inner_text = "CPU usage: " + utility::to_string(cpu_usage, 2) + "%";
+	// };
 
 	win::p sysmem_p;
+	double rss = 0.0;
+	double mem_usage = 0.0;
 	struct rusage rusage;
 	getrusage(RUSAGE_SELF, &rusage);
 	sysmem_p.style.color_pair = COLOR_PAIR(1);
 	sysmem_p.style.height = 2;
 	sysmem_p.style.width = 19;
-	sysmem_p.callback = [&sysmem_p, &rusage]() {
-		sysmem_p.inner_text = "Mem:" + utility::to_string(rusage.ru_maxrss / 1024.0, 1) + "kB";
-	};
+	// sysmem_p.callback = [&sysmem_p, &rusage, &rss, &mem_usage]() {
+	// 	//sysmem_p.inner_text = "Mem:" + utility::to_string(rusage.ru_maxrss / 1024.0, 1) + "kB";
+	// 	sysmem_p.inner_text = "Mem: " + utility::to_string(mem_usage, 2) + "% (" + utility::to_string(rss, 1) + ")";
+	// };
 
 	win::div sysstat_container;
 	sysstat_container.style.color_pair = COLOR_PAIR(1);
@@ -147,28 +150,30 @@ int main() {
 		key = gkey;
 	});
 
-	engn.init_thread([&rusage](std::mutex& mutex) {
-		mutex.lock();
-		getrusage(RUSAGE_SELF, &rusage);
-		mutex.unlock();
-	}, 5000);
-
 
 	size_t previous_idle_time = 0, previous_total_time = 0;
-	engn.init_thread([&previous_idle_time, &previous_total_time, &cpu_usage](std::mutex& mutex) {
-		size_t idle_time = 0, total_time = 0;
-		get_cpu_times(idle_time, total_time);
+	engn.threads_pool.add_task(threads::task(
+		[&previous_idle_time, &previous_total_time, &sysstat_p, &sysmem_p](std::atomic<bool>& is_tworking) {
+		while (is_tworking) {
+			size_t idle_time = 0, total_time = 0;
+			get_cpu_times(idle_time, total_time);
 
-		const float idle_time_delta = idle_time - previous_idle_time;
-		const float total_time_delta = total_time - previous_total_time;
-		
-		mutex.lock();
-		cpu_usage = 100.0 * (1.0 - idle_time_delta / total_time_delta);
+			const float idle_time_delta = idle_time - previous_idle_time;
+			const float total_time_delta = total_time - previous_total_time;
+			
+			double vm_usage, resident_set;
+			process_mem_usage(vm_usage, resident_set);
 
-		previous_idle_time = idle_time;
-    previous_total_time = total_time;
-		mutex.unlock();
-	}, 2000);
+			previous_idle_time = idle_time;
+			previous_total_time = total_time;
+
+			double cpu_usage = 100.0 * (1.0 - idle_time_delta / total_time_delta);
+			sysstat_p.inner_text = "CPU: " + utility::to_string(cpu_usage, 3) + "%";
+			sysmem_p.inner_text = "Mem: " + utility::to_string(vm_usage, 0) + "(" + utility::to_string(resident_set, 1) + ") kB";
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+		}
+	}));
 
 
 	engn.start();

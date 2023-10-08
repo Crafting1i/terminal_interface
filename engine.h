@@ -1,12 +1,14 @@
 #include "win.h"
 #include "util.h"
 #include "keys.h"
+#include "mythreads.h"
 
 #include <vector>
 
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <queue>
 
 namespace engine {
 	class windows_selector {
@@ -49,11 +51,13 @@ namespace engine {
 
 		std::atomic<bool> is_working = false;
 	public:
+		threads::threads_pool threads_pool;
 		win::div* div = nullptr;
 		utility::event<void, const keys::key&> on_key_pressed;
 
 	public:
-		engine() {};
+		engine(int threads_count):
+			threads_pool(threads::threads_pool(fmax(threads_count, 1)))  {};
 
 		void init();
 		void start();
@@ -61,5 +65,6 @@ namespace engine {
 		
 		void init_thread(std::function<void(std::mutex&)> cb, uint32_t timeout = (uint32_t)(-1));
 	};
+	
 }
 

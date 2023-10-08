@@ -46,6 +46,17 @@ namespace utility {
 				cb(args...);
 			}
 		}
+
+		std::vector<callback_t> get_dispatcher() const {
+			return std::vector<callback_t>(this->dispatcher);
+		}
+
+		void detach() {
+			this->dispatcher.erase();
+		}
+		void clear() {
+			this->dispatcher.clear();
+		}
 	};
 }
 

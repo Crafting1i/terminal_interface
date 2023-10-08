@@ -60,7 +60,9 @@
     "thread": "cpp",
     "typeinfo": "cpp",
     "unordered_set": "cpp",
-    "fstream": "cpp"
+    "fstream": "cpp",
+    "queue": "cpp",
+    "cinttypes": "cpp"
   },
   "makefile.launchConfigurations": [
     {

@@ -17,15 +17,13 @@ namespace engine {
 	void engine::init_thread(std::function<void(std::mutex&)> cb, uint32_t timeout_ms) {
 		if(timeout_ms == (uint32_t)(-1)) timeout_ms = 1000 / this->MAX_FPS;
 		// "this" capturing like this->, so other local variables (but not "cb"?)
-		std::thread t ([this, &cb, timeout_ms]() {
-			while(this->is_working) {
+		this->threads_pool.add_task(threads::task([this, &cb, timeout_ms](std::atomic<bool>& is_working) {
+			while(is_working) {
 				cb(this->mutex);
 
 				std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
 			}
-		});
-
-		t.detach();
+		}));
 	}
 
 	// class engine : public
@@ -44,6 +42,8 @@ namespace engine {
 		noecho();
 		// halfdelay(1); // delay 1 = 0.1 sec
 		nodelay(stdscr, TRUE);
+
+		this->threads_pool.start();
 
 		curs_set(0);
 
@@ -68,41 +68,40 @@ namespace engine {
 			}
 		});
 
-		// Key press event thread
-		this->init_thread([this](std::mutex& mutex) {
-			mutex.lock();
-			char code1 = getch();
-			char code2 = -1;
-			char code3 = -1;
-			char code4 = -1;
+		this->threads_pool.add_task(threads::task([this](std::atomic<bool>& is_tworking) {
+			while(is_tworking) {
+				char code1 = getch();
+				char code2 = -1;
+				char code3 = -1;
+				char code4 = -1;
 
-			if(code1 != -1) {
-				code2 = getch();
-				if (code2 == code1) {
-				ungetch(code2);
-				code2 = -1;
-			}
-			}
-			if(code2 != -1) {
-				code3 = getch();
-				if(code3 == code1 || code3 == code2) {
-					ungetch(code3);
-					code3 = -1;
+				if(code1 != -1) {
+					code2 = getch();
+					if (code2 == code1) {
+					ungetch(code2);
+					code2 = -1;
 				}
-			}
-			if(code3 != -1) {
-				code4 = getch();
-				if(code4 == code1 || code4 == code2 || code4 == code3) {
-					ungetch(code4);
-					code4 = -1;
 				}
+				if(code2 != -1) {
+					code3 = getch();
+					if(code3 == code1 || code3 == code2) {
+						ungetch(code3);
+						code3 = -1;
+					}
+				}
+				if(code3 != -1) {
+					code4 = getch();
+					if(code4 == code1 || code4 == code2 || code4 == code3) {
+						ungetch(code4);
+						code4 = -1;
+					}
+				}
+				
+				// !ATTANTION! Here should calls engine::stop(), and mutex are locked here
+				this->on_key_pressed.call({ code1, code2, code3, code4 });
+				std::this_thread::sleep_for(std::chrono::milliseconds(80));
 			}
-			
-			// !ATTANTION! Here should calls engine::stop(), and mutex are locked here
-			this->on_key_pressed.call({ code1, code2, code3, code4 });
-
-			mutex.unlock();
-		});
+		}));
 
 		// Rendering(main) thread
 		while(this->is_working) {
@@ -111,9 +110,10 @@ namespace engine {
 			this->div->refresh_size();
 			this->div->print();
 
+			this->mutex.unlock();
+
 			doupdate();
 
-			this->mutex.unlock();
 
 			if (key_pressed == key_esc) this->stop();
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / MAX_FPS));
@@ -125,6 +125,7 @@ namespace engine {
 	// !REMEMBER! This function must be called IN RENDER(MAIN) THREAD
 	void engine::stop() {
 		this->mutex.lock();
+		this->on_key_pressed.clear();
 		this->is_working = false;
 		this->mutex.unlock();
 
