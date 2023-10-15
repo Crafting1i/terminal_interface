@@ -1,3 +1,5 @@
+#pragma once
+
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -18,13 +20,8 @@ namespace threads {
   };
   class task {
     friend class threads_pool;
-    enum class task_status {
-			awaiting,
-			completed
-		};
   private:
     taskid_t id = 0;
-    task_status status = task_status::awaiting;
 		threads_pool* pool = nullptr;
 		thread* thread_handle = nullptr;
 

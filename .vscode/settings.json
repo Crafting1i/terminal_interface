@@ -62,7 +62,10 @@
     "unordered_set": "cpp",
     "fstream": "cpp",
     "queue": "cpp",
-    "cinttypes": "cpp"
+    "cinttypes": "cpp",
+    "optional": "cpp",
+    "ranges": "cpp",
+    "span": "cpp"
   },
   "makefile.launchConfigurations": [
     {

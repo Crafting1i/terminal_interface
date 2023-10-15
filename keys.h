@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <cstring>
 #include <stdexcept>
@@ -26,12 +28,20 @@ namespace keys {
 		char get_code3() const { return code3; }
 		char get_code4() const { return code4; }
 		std::string get_string() const {
-			return std::string({ code1, code2, code3, code4 });
+			std::string res = "";
+			if(code1 && code1 != -1) res += code1;
+			if(code2 && code2 != -1) res += code2;
+			if(code3 && code3 != -1) res += code3;
+			if(code4 && code4 != -1) res += code4;
+			return res;
 		}
 
 		bool operator==(const key& other) const {
 			return this->code1 == other.code1 && this->code2 == other.code2
 				  && this->code3 == other.code3 && this->code4 == other.code4;
+		}
+		bool operator!=(const key& other) const {
+			return !this->operator==(other);
 		}
 		operator bool() const {
 			return this->code1 != -1 || this->code2 != -1

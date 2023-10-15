@@ -13,19 +13,6 @@ static bool is_engine_initialized = false;
 //static const int MAX_FPS = 15;
 
 namespace engine {
-	// class engine : private
-	void engine::init_thread(std::function<void(std::mutex&)> cb, uint32_t timeout_ms) {
-		if(timeout_ms == (uint32_t)(-1)) timeout_ms = 1000 / this->MAX_FPS;
-		// "this" capturing like this->, so other local variables (but not "cb"?)
-		this->threads_pool.add_task(threads::task([this, &cb, timeout_ms](std::atomic<bool>& is_working) {
-			while(is_working) {
-				cb(this->mutex);
-
-				std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
-			}
-		}));
-	}
-
 	// class engine : public
 	void engine::init() {
 		if(is_engine_initialized)
@@ -68,8 +55,8 @@ namespace engine {
 			}
 		});
 
-		this->threads_pool.add_task(threads::task([this](std::atomic<bool>& is_tworking) {
-			while(is_tworking) {
+		this->threads_pool.add_task(threads::task([this](std::atomic<bool>& is_working) {
+			while(is_working) {
 				char code1 = getch();
 				char code2 = -1;
 				char code3 = -1;
@@ -105,43 +92,43 @@ namespace engine {
 
 		// Rendering(main) thread
 		while(this->is_working) {
-			this->mutex.lock();
+			this->mutex_widows.lock();
 
 			this->div->refresh_size();
 			this->div->print();
 
-			this->mutex.unlock();
+			this->mutex_widows.unlock();
 
 			doupdate();
 
-
-			if (key_pressed == key_esc) this->stop();
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / MAX_FPS));
 		}
+		this->stop_eng();
 
 		endwin();
 	}
 
-	// !REMEMBER! This function must be called IN RENDER(MAIN) THREAD
 	void engine::stop() {
-		this->mutex.lock();
-		this->on_key_pressed.clear();
-		this->is_working = false;
-		this->mutex.unlock();
+		this->is_working.store(false);
+	}
 
+	// class engine : private
+	void engine::stop_eng() {
+		this->mutex_on_key_pressed.lock();
+		this->on_key_pressed.clear();
+		this->mutex_on_key_pressed.unlock();
+
+		this->mutex_widows.lock();
 		delete this->ws;
 		delete this->div;
+		this->mutex_widows.unlock();
 	}
 
 	// class windows_selector : public
 	windows_selector::windows_selector(win::window* win): focused(win) {
 		this->info = new win::p();
-		//this->info->style.align = styles::keywords::SK_RIGHT;
-		//this->info->style.position = styles::keywords::SK_FIXED;
 		this->info->style.width = styles::s_digit(100, styles::digit_type::DT_PERCENT);
 		this->info->style.height = 1;
-		//this->info->style.margin_left = this->focused->get_width() - 8;
-		//this->info->style.autotrim = false;
 		this->info->style.is_moveble = false;
 
 		this->info->callback = [this]() {
@@ -170,6 +157,19 @@ namespace engine {
 		return this->focused;
 	}
 	void windows_selector::update(const keys::key& key) {
+		if(focused->get_type() == win::wt_input && key != this->key_end) {
+			win::input* in = dynamic_cast<win::input*>(this->focused);
+
+			if(key == "\u007F") {
+				if(in->value.length()) in->value.erase(in->value.length() - 1);
+			} else if(key.get_string().length() == 1) in->value += key.get_string();
+			return;
+		}
+		if(focused->get_type() == win::wt_button && key == this->key_insert) {
+			dynamic_cast<win::button*>(this->focused)->press();
+			return;
+		}
+
 		if(key == this->key_page_up) return (void)this->list_up();
 		if(key == this->key_page_down) return (void)this->list_down();
 		if(key == this->key_insert) return (void)this->select();
@@ -182,6 +182,7 @@ namespace engine {
 		else if(key == this->key_arrow_down) this->move_focused(0, -1);
 		else if(key == this->key_arrow_right) this->move_focused(1, 0);
 		else if(key == this->key_arrow_left) this->move_focused(-1, 0);
+
 	}
 
 	void windows_selector::move_focused(int x, int y) {

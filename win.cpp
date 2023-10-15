@@ -17,12 +17,34 @@ void window::rewrite_parent(div* parent) {
 	if(this->parent) this->parent->remove(this);
 	this->parent = parent;
 
-	// delwin(this->handle);
-
-	// this->handle = derwin(parent ? parent->handle : stdscr, 1, 1, 0, 0);
-	// if(!this->handle) throw std::runtime_error("Handle creating have failed");
-
 	this->refresh_size();
+}
+std::string window::align_line(std::string& line, int width) {
+	switch (this->style.text_align) {
+	case styles::keywords::SK_RIGHT:
+		for (int i = 0; i < line.length() - width; i += 1) {
+			line = ' ' + line;
+		}
+		break;
+	case styles::keywords::SK_CENTER:
+		for (int i = 0; i < (line.length() - width) / 2; i += 1) {
+			line = ' '  + line;
+		}
+	case styles::keywords::SK_LEFT:
+	default:
+		for (int i = 0; i < line.length() - width; i += 1) {
+			line += ' ';
+		}
+	};
+
+	return line;
+}
+void window::color_win() {
+	if(!can_change_color()) return;
+
+	auto pair = style.color_pair;
+	for(auto filter : style.color_pair_filters) pair |= filter;
+	wattrset(this->handle, pair);
 }
 
 // class window : public
@@ -124,20 +146,6 @@ void window::clear() {
 	werase(this->handle);
 	touchwin(this->handle);
 	wnoutrefresh(this->handle);
-}
-
-void window::color_win() {
-	if(!can_change_color()) return;
-
-	// init_color(
-	// 	TEXT_COLOR_ID,
-	// 	1000 * ((style.color >> (hex2bin_koef * 2)) & color_mask) / 255,
-	// 	1000 * ((style.color >>  hex2bin_koef)      & color_mask) / 255,
-	// 	1000 * (style.color                         & color_mask) / 255
-	// );
-	auto pair = style.color_pair;
-	for(auto filter : style.color_pair_filters) pair |= filter;
-	wattrset(this->handle, pair);
 }
 
 // class div : public
@@ -252,27 +260,6 @@ p::~p() {
 	this->parent = nullptr;
 }
 
-std::string p::align_line(std::string& line, int width) {
-	switch (this->style.text_align) {
-	case styles::keywords::SK_RIGHT:
-		for (int i = 0; i < line.length() - width; i += 1) {
-			line = ' ' + line;
-		}
-		break;
-	case styles::keywords::SK_CENTER:
-		for (int i = 0; i < (line.length() - width) / 2; i += 1) {
-			line = ' '  + line;
-		}
-	case styles::keywords::SK_LEFT:
-	default:
-		for (int i = 0; i < line.length() - width; i += 1) {
-			line += ' ';
-		}
-	};
-
-	return line;
-}
-
 // class p : public
 void p::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
@@ -294,8 +281,7 @@ void p::print() {
 
 	std::string result = "";
 
-	for (int i = 0; i < content_height /* && txt.length()*/; i += 1) {
-		//std::string line = txt.substr(0, content_width);
+	for (int i = 0; i < content_height; i += 1) {
 		std::string line;
 		if(txt.length()) line = txt.substr(0, content_width);
 
@@ -326,7 +312,6 @@ void p::print() {
 //class progress : public
 void progress::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
-	//this->refresh_size();
 
 	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
 		werase(this->handle);
@@ -352,23 +337,128 @@ void progress::print() {
 	touchwin(this->handle);
 	wnoutrefresh(this->handle);
 }
-
 progress::~progress() {
+	this->parent = nullptr;
+}
+
+//class input : public
+void input::print() {
+	if(!this->handle) throw std::runtime_error("Can't use without window handle");
+
+	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
+		werase(this->handle);
+		wnoutrefresh(this->handle);
+		return;
+	}
+
+	int content_width  = this->width  - style.padding_left - style.padding_right;
+	int content_height = this->height - style.padding_top - style.padding_bottom;
+
+	std::string result, txt = value;
+
+	if(content_height == 1) {
+		if(txt.length() > content_width) {
+			result = "...";
+			if(type == password) for(int i = 0; i < content_width - 3; i += 1) result += '*';
+			else result += txt.substr(txt.length() - content_width + 3, content_width - 3);
+		} else {
+			if(type == password) for(int i = 0; i < txt.length(); i += 1) result += '*';
+			else result = txt.substr(0, content_width);
+		}
+		for (int i = 0; i < result.length() - width; i += 1) result += ' ';
+	}
+	else {
+		for (int i = 0; i < content_height; i += 1) {
+			std::string line;
+			if(txt.length()) {
+				if(type == password) for(int i = 0; i < content_width; i += 1) result += ' ';
+				else line = txt.substr(0, content_width);
+			}
+
+			for (int i = 0; i < line.length() - width; i += 1) line += ' ';
+
+			result += line;
+			if(txt.length() <= content_width) txt.clear();
+			else {
+				txt = txt.substr(content_width);
+			}
+		}
+	}
+
+	this->color_win();
+	mvwprintw(this->handle, style.padding_top, style.padding_left, "%s", result.c_str());
+
+	touchwin(this->handle);
+	wnoutrefresh(this->handle);
+}
+input::~input() {
+	this->parent = nullptr;
+}
+
+//class button : public
+void button::print() {
+	if(!this->handle) throw std::runtime_error("Can't use without window handle");
+
+	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
+		werase(this->handle);
+		wnoutrefresh(this->handle);
+		return;
+	}
+
+	int content_width  = this->width  - style.padding_left - style.padding_right;
+	int content_height = this->height - style.padding_top - style.padding_bottom;
+
+	std::string result, txt = value;
+
+	for (int i = 0; i < content_height; i += 1) {
+		std::string line;
+		if(txt.length()) line = txt.substr(0, content_width);
+
+		for (int i = 0; i < style.padding_left; i += 1) {
+			line = ' ' + line;
+		}
+		for (int i = 0; i < style.padding_right; i += 1) {
+			line += ' ';
+		}
+
+		line = this->align_line(line, content_width);
+
+		result += line;
+
+		if(txt.length() <= content_width) txt.clear();
+		else {
+			txt = txt.substr(content_width);
+		}
+	}
+
+	this->color_win();
+	mvwprintw(this->handle, style.padding_top, style.padding_left, "%s", result.c_str());
+
+	touchwin(this->handle);
+	wnoutrefresh(this->handle);
+}
+button::~button() {
 	this->parent = nullptr;
 }
 
 // Windows get_type() funtion defining
 win_type window::get_type() const {
-	return this->type;
+	return wt_none;
 }
 win_type p::get_type() const {
-	return this->type;
+	return wt_p;
 }
 win_type div::get_type() const {
-	return this->type;
+	return wt_div;
 }
 win_type progress::get_type() const {
-	return this->type;
+	return wt_progress;
+}
+win_type input::get_type() const {
+	return wt_input;
+}
+win_type button::get_type() const {
+	return wt_button;
 }
 
 }

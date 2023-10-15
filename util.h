@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <iterator>
@@ -12,13 +14,6 @@ namespace utility {
 	std::string to_string(double d, int precision);
 
 	/*
-	template<typename Iter> void bubble_sort_cb(
-		Iter begin, Iter end,
-		std::function<bool(
-			const typename std::iterator_traits<Iter>::value_type&,
-			const typename std::iterator_traits<Iter>::value_type&
-		)> cb
-	);
 	std::string to_string(const std::vector<int>& vec);
 	*/
 

@@ -38,6 +38,7 @@ int main() {
 	getmaxyx(stdscr, scrn_height, scrn_width);
 
 	init_pair(1, COLOR_BLUE, COLOR_YELLOW);
+	init_pair(2, COLOR_RED, COLOR_WHITE);
 	styles::styles my_styles;
 	my_styles.width  = 31;
 	my_styles.height = 1;
@@ -102,10 +103,16 @@ int main() {
 	container.style.width  = 40;
 	container.style.height = 10;
 
+	win::input input;
+	input.type = win::input::password;
+	input.style.width = 20;
+	input.style.height = 1;
+	input.style.color_pair = COLOR_PAIR(2);
+
 	container.append(&key_view_win);
 	container.append(&datetime_win);
 	container.append(&batt_level_div);
-
+	container.append(&input);
 
 
 	win::p sysstat_p;
@@ -146,8 +153,9 @@ int main() {
 	engn.div->append(&sysstat_container);
 	//engn.div->append(&test_win);
 
-	engn.on_key_pressed([&key] (const keys::key& gkey) {
+	engn.on_key_pressed([&engn, &key] (const keys::key& gkey) {
 		key = gkey;
+		if(key && key == "\33") engn.stop(); 
 	});
 
 

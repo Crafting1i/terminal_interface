@@ -1,3 +1,5 @@
+#pragma once
+
 #include "win.h"
 #include "util.h"
 #include "keys.h"
@@ -43,17 +45,17 @@ namespace engine {
 	};
 
 	class engine {
-	private:
-		std::mutex mutex;
-		std::vector<std::thread*> threads;
-		windows_selector* ws = nullptr;
-		uint8_t MAX_FPS = 15;
-
-		std::atomic<bool> is_working = false;
 	public:
 		threads::threads_pool threads_pool;
 		win::div* div = nullptr;
 		utility::event<void, const keys::key&> on_key_pressed;
+
+	private:
+		std::atomic<bool> is_working = false;
+		std::mutex mutex_widows;
+		std::mutex mutex_on_key_pressed;
+		windows_selector* ws = nullptr;
+		uint8_t MAX_FPS = 15;
 
 	public:
 		engine(int threads_count):
@@ -63,8 +65,7 @@ namespace engine {
 		void start();
 		void stop();
 		
-		void init_thread(std::function<void(std::mutex&)> cb, uint32_t timeout = (uint32_t)(-1));
+	private:
+		void stop_eng();
 	};
-	
 }
-

@@ -7,7 +7,6 @@ void task::send_signal() {
 }
 void task::pool_method() {
   this->method(this->thread_handle->is_working);
-  this->status = task_status::completed;
   this->send_signal();
 }
 

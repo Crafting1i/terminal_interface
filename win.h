@@ -1,5 +1,8 @@
+#pragma once
+
 #include <ncurses.h>
 
+#include "util.h"
 #include "styles.h"
 #include <functional>
 #include <cmath>
@@ -9,9 +12,12 @@ namespace win {
 class window;
 class div;
 class p;
+class progress;
+class input;
+class button;
 
 enum win_type {
-	wt_none, wt_div, wt_p, wt_progress
+	wt_none, wt_div, wt_p, wt_progress, wt_input, wt_button
 };
 
 class window {
@@ -33,6 +39,7 @@ public:
 protected:
 	void rewrite_parent(div* parent);
 	void color_win();
+	std::string align_line(std::string& str, int width);
 
 public:
 	window(const window& win) = delete;
@@ -58,9 +65,6 @@ public:
 };
 
 class div : public window {
-protected:
-	const win_type type = win_type::wt_div;
-
 private:
 	std::vector<window*> children;
 
@@ -79,14 +83,8 @@ public:
 };
 
 class p : public window {
-protected:
-	const win_type type = win_type::wt_p;
-
 public:
 	std::string inner_text;
-
-private:
-	std::string align_line(std::string& str, int width);
 
 public:
 	p(const styles::styles& style = {}): window(style) {};
@@ -97,9 +95,6 @@ public:
 };
 
 class progress : public window {
-protected:
-	const win_type type = win_type::wt_progress;
-
 public:
 	long long max = 100, min = 0, value = 0;
 	char fill = '#';
@@ -110,6 +105,40 @@ public:
 
 	virtual void print();
 	virtual win_type get_type() const;
+};
+
+class input : public window {
+public:
+enum input_type {
+	common, password
+};
+public:
+	std::string value;
+	input_type type = input_type::common;
+
+public:
+	input(const styles::styles& style = {}): window(style) {};
+	virtual ~input();
+
+	virtual void print();
+	virtual win_type get_type() const;
+};
+
+class button : public window {
+public:
+	std::string value;
+	utility::event<void> on_pressed;
+
+public:
+	button(const styles::styles& style = {}): window(style) {};
+	virtual ~button();
+
+	virtual void print();
+	virtual win_type get_type() const;
+
+	void press() {
+		on_pressed.call();
+	}
 };
 
 }
