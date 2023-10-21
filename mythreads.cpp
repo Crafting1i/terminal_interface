@@ -1,5 +1,6 @@
 #include "mythreads.h"
 
+namespace ami {
 namespace threads {
 
 void task::send_signal() {
@@ -130,4 +131,5 @@ taskid_t threads_pool::wait_signal() {
 	}
 }
 
+}
 }

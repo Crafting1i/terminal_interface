@@ -11,7 +11,7 @@
 
 //#include <tcl.h>
 
-namespace win {
+namespace ami {
 // class window : protected
 void window::rewrite_parent(div* parent) {
 	if(this->parent) this->parent->remove(this);

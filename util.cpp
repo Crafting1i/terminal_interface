@@ -11,6 +11,7 @@
 const char* const PATH_BATT_CHARGE_NOW  = "/sys/class/power_supply/BAT1/energy_now";
 const char* const PATH_BATT_CHARGE_FULL = "/sys/class/power_supply/BAT1/energy_full";
 
+namespace ami {
 namespace utility {
 	double get_batt_level() {
 		FILE* fcharge_now = fopen(PATH_BATT_CHARGE_NOW, "r");
@@ -110,19 +111,5 @@ namespace utility {
 		return str;
 	}
 
-
-	/*
-	template<typename r_t, typename ...a_t> void event<r_t, a_t...>::attach(event<r_t, a_t...>::callback_t cb) {
-		this->dispatcher.push_back(cb);
-	}
-	template<typename r_t, typename ...a_t> void event<r_t, a_t...>::operator()(event<r_t, a_t...>::callback_t cb) {
-		this->dispatcher.push_back(cb);
-	}
-
-	template<typename r_t, typename ...a_t> void event<r_t, a_t...>::call(a_t ...args) {
-		for(auto cb : this->dispatcher) {
-			cb(args...);
-		}
-	}*/
-
+}
 }

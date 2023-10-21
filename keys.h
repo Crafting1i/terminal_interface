@@ -4,7 +4,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace keys {
+namespace ami {
   class key {
 	private:
 		char code1 = -1, code2 = -1, code3 = -1, code4 = -1;

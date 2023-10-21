@@ -7,7 +7,7 @@
 #include <functional>
 #include <cmath>
 
-namespace win {
+namespace ami {
 
 class window;
 class div;

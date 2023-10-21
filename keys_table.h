@@ -3,8 +3,8 @@
 #include <unordered_map>
 #include <keys.h>
 
-namespace keys_table {
-  const std::unordered_map<std::string, const keys::key> KEYS {
+namespace ami {
+  const std::unordered_map<std::string, const ami::key> KEYS {
 		{ "A", "A" },
 		{ "B", "B" },
 		{ "ARROW_UP", "\u001B[A" },

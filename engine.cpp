@@ -12,7 +12,7 @@ static bool is_engine_initialized = false;
 // Constatnts
 //static const int MAX_FPS = 15;
 
-namespace engine {
+namespace ami {
 	// class engine : public
 	void engine::init() {
 		if(is_engine_initialized)
@@ -39,23 +39,23 @@ namespace engine {
 		styles::styles style;
 		getmaxyx(stdscr, style.height, style.width);
 
-		this->div = new win::div(style);
+		this->div = new ami::div(style);
 	}
 
 	void engine::start() {
 		this->is_working = true;
 
-		keys::key key_pressed, key_esc = "\u001B";
+		ami::key key_pressed, key_esc = "\u001B";
 
 		this->ws = new windows_selector(this->div);
-		this->on_key_pressed([this, &key_pressed](const keys::key& key) {
+		this->on_key_pressed([this, &key_pressed](const ami::key& key) {
 			key_pressed = key;
 			if(key) {
 				this->ws->update(key);
 			}
 		});
 
-		this->threads_pool.add_task(threads::task([this](std::atomic<bool>& is_working) {
+		this->threads_pool.add_task(ami::threads::task([this](std::atomic<bool>& is_working) {
 			while(is_working) {
 				char code1 = getch();
 				char code2 = -1;
@@ -125,25 +125,25 @@ namespace engine {
 	}
 
 	// class windows_selector : public
-	windows_selector::windows_selector(win::window* win): focused(win) {
-		this->info = new win::p();
+	windows_selector::windows_selector(ami::window* win): focused(win) {
+		this->info = new ami::p();
 		this->info->style.width = styles::s_digit(100, styles::digit_type::DT_PERCENT);
 		this->info->style.height = 1;
 		this->info->style.is_moveble = false;
 
 		this->info->callback = [this]() {
-			win::win_type win_type = this->focused->get_type();
+			ami::win_type win_type = this->focused->get_type();
 			this->info->inner_text = std::to_string(this->selected_index + 1) + '/' + std::to_string(this->focused_children_size);
 			this->info->inner_text += '(' + std::string(
-					win_type == win::win_type::wt_div ? "div"
-					: win_type == win::win_type::wt_p ? "p"
-					: win_type == win::win_type::wt_progress ? "progress"
+					win_type == ami::win_type::wt_div ? "div"
+					: win_type == ami::win_type::wt_p ? "p"
+					: win_type == ami::win_type::wt_progress ? "progress"
 					: "unknown"
 				) + ')';
 		};
 
-		dynamic_cast<win::div*>(this->focused)->append(this->info);
-		this->focused_children_size = dynamic_cast<win::div*>(this->focused)->get_children().size();
+		dynamic_cast<ami::div*>(this->focused)->append(this->info);
+		this->focused_children_size = dynamic_cast<ami::div*>(this->focused)->get_children().size();
 	}
 	windows_selector::~windows_selector() {
 		this->focused = nullptr;
@@ -153,20 +153,20 @@ namespace engine {
 	int windows_selector::get_selected_index() const {
 		return this->selected_index;
 	}
-	win::window* windows_selector::get_focused() const {
+	ami::window* windows_selector::get_focused() const {
 		return this->focused;
 	}
-	void windows_selector::update(const keys::key& key) {
-		if(focused->get_type() == win::wt_input && key != this->key_end) {
-			win::input* in = dynamic_cast<win::input*>(this->focused);
+	void windows_selector::update(const ami::key& key) {
+		if(focused->get_type() == ami::wt_input && key != this->key_end) {
+			ami::input* in = dynamic_cast<ami::input*>(this->focused);
 
 			if(key == "\u007F") {
 				if(in->value.length()) in->value.erase(in->value.length() - 1);
 			} else if(key.get_string().length() == 1) in->value += key.get_string();
 			return;
 		}
-		if(focused->get_type() == win::wt_button && key == this->key_insert) {
-			dynamic_cast<win::button*>(this->focused)->press();
+		if(focused->get_type() == ami::wt_button && key == this->key_insert) {
+			dynamic_cast<ami::button*>(this->focused)->press();
 			return;
 		}
 
@@ -202,11 +202,11 @@ namespace engine {
 	}
 
 	// class windows_selector : private
-	win::window* windows_selector::list_up() {
-		if(this->focused->get_type() != win::win_type::wt_div)
+	ami::window* windows_selector::list_up() {
+		if(this->focused->get_type() != ami::win_type::wt_div)
 			return this->focused;
 
-		auto children = dynamic_cast<win::div*>(this->focused)->get_children();
+		auto children = dynamic_cast<ami::div*>(this->focused)->get_children();
 		if(this->selected_index + 1 == children.size()) this->selected_index = 0;
 		else this->selected_index += 1;
 		
@@ -214,11 +214,11 @@ namespace engine {
 
 		return this->focused;
 	}
-	win::window* windows_selector::list_down() {
-		if(this->focused->get_type() != win::win_type::wt_div)
+	ami::window* windows_selector::list_down() {
+		if(this->focused->get_type() != ami::win_type::wt_div)
 			return this->focused;
 
-		auto children = dynamic_cast<win::div*>(this->focused)->get_children();
+		auto children = dynamic_cast<ami::div*>(this->focused)->get_children();
 		if(this->selected_index == 0) this->selected_index = children.size() - 1;
 		else this->selected_index -= 1;
 		
@@ -226,30 +226,30 @@ namespace engine {
 
 		return this->focused;
 	}
-	win::window* windows_selector::select() {
-		if(this->focused->get_type() != win::win_type::wt_div)
+	ami::window* windows_selector::select() {
+		if(this->focused->get_type() != ami::win_type::wt_div)
 			return this->focused;
 
 		this->focused->style.color_pair_filters.erase(A_REVERSE);
-		auto children = dynamic_cast<win::div*>(this->focused)->get_children();
+		auto children = dynamic_cast<ami::div*>(this->focused)->get_children();
 		this->focused = children[this->selected_index];
 		this->selected_index = 0;
 
 		this->focused->style.color_pair_filters.insert(A_REVERSE);
 
-		if(this->focused->get_type() == win::win_type::wt_div)
-			this->focused_children_size = dynamic_cast<win::div*>(this->focused)->get_children().size();
+		if(this->focused->get_type() == ami::win_type::wt_div)
+			this->focused_children_size = dynamic_cast<ami::div*>(this->focused)->get_children().size();
 		else this->focused_children_size = 0;
 
 		return this->focused;
 	}
-	win::window* windows_selector::unselect() {
+	ami::window* windows_selector::unselect() {
 		this->focused->style.color_pair_filters.erase(A_REVERSE);
 		
 		if(this->focused->get_parent() != nullptr) {
 			this->selected_index = 0;
 			this->focused_children_size = this->focused->get_parent()->get_children().size();
-			this->focused = dynamic_cast<win::window*>(this->focused->get_parent());
+			this->focused = dynamic_cast<ami::window*>(this->focused->get_parent());
 			
 			if(this->focused->get_parent() != nullptr)
 				this->focused->style.color_pair_filters.insert(A_REVERSE);

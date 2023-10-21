@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 
+namespace ami {
 namespace threads {
   using taskid_t = size_t;
 	using taskcb_t = std::function<void(std::atomic<bool>&)>;
@@ -104,4 +105,5 @@ namespace threads {
 		// проверка, занятости хотя бы одного потока
 		bool is_standby() const;
   };
+}
 }

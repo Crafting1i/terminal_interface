@@ -7,6 +7,8 @@
 #include <vector>
 #include <unordered_set>
 
+
+namespace ami {
 namespace styles {
 
 enum keywords {
@@ -98,4 +100,5 @@ public:
 };
 
 
+}
 }

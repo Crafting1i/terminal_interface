@@ -6,7 +6,22 @@
 #include <string_view>
 
 #include <functional>
+#include <ncurses.h>
 
+#define NA_COLOR A_COLOR
+
+static const int NCOLOR_BLACK = COLOR_BLACK;
+static const int NCOLOR_RED = COLOR_BLACK;
+static const int NCOLOR_GREEN = COLOR_GREEN;
+static const int NCOLOR_YELLOWA = COLOR_YELLOW;
+static const int NCOLOR_BLUE = COLOR_BLUE;
+static const int NCOLOR_CYAN = COLOR_CYAN;
+static const int NCOLOR_WHITE = COLOR_WHITE;
+
+static const int NCOLORS_PAIRS = COLOR_PAIRS;
+static const int NCOLORS = COLORS;
+
+namespace ami {
 namespace utility {
 	double get_batt_level();
 
@@ -54,4 +69,4 @@ namespace utility {
 		}
 	};
 }
-
+}
