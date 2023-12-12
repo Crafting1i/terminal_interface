@@ -89,13 +89,16 @@ namespace utility {
 
 		/// @brief Remove listener at given position.
 		/// @param __position Iterator pointing to element to be erased.
-		auto erase(std::vector<callback_t>::const_iterator __position) {
+		auto erase(typename std::vector<callback_t>::const_iterator __position) {
 			return this->dispatcher.erase(__position);
 		}
 		/// @brief Remove a range of listeners.
 		/// @param __first First element to remove
 		/// @param __last Last element to remove
-		auto erase(std::vector<callback_t>::const_iterator __first, std::vector<callback_t>::const_iterator __last) {
+		auto erase(
+			typename std::vector<callback_t>::const_iterator __first,
+			typename std::vector<callback_t>::const_iterator __last
+			) {
 			return this->dispatcher.erase(__first, __last);
 		}
 		/// @brief Clears the dispatcher

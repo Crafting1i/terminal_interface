@@ -362,8 +362,6 @@ input::~input() {
 
 //class button : public
 void button::print() {
-	on_pressed;
-
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
 
 	if(!this->style.is_visible || this->width == 0 || this->height == 0) {

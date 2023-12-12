@@ -73,7 +73,7 @@ public:
 	WINDOW* get_handle() const noexcept;
 
 	/// @return Pointer to handle of the window's parent
-	div* get_parent() const;
+	div* get_parent() const noexcept;
 
 	/// @brief Resize and moves widnows by parameter from the style
 	void refresh_size();
