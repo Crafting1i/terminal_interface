@@ -4,6 +4,7 @@
 #include <keys.h>
 
 namespace ami {
+  /// @brief Map collection of keys. Key is name, value is key hadler.
   const std::unordered_map<std::string, const ami::key> KEYS {
 		{ "A", "A" },
 		{ "B", "B" },

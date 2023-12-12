@@ -30,6 +30,7 @@ std::string window::align_line(std::string& line, int width) {
 		for (int i = 0; i < (line.length() - width) / 2; i += 1) {
 			line = ' '  + line;
 		}
+		break;
 	case styles::keywords::SK_LEFT:
 	default:
 		for (int i = 0; i < line.length() - width; i += 1) {
@@ -78,6 +79,10 @@ void window::refresh_size() {
 	uint32_t style_min_height = this->style.min_height.get_type() == styles::digit_type::DT_PIXEL
 		? this->style.min_height.get_value() : this->style.min_height.get_value() * ph / 100;
 
+  // Means
+	// "Not above then (this->height - paddding_y), style.max_height
+	// and not less then style.min_height"
+	// style.max_height have priority
 	this->height = fmin(
 		fmax(style_height, style_min_height),
 		fmin(ph - ppadding_y, style_max_height)
@@ -87,20 +92,6 @@ void window::refresh_size() {
 		fmin(pw - ppadding_x, style_max_width)
 	);
 
-
-
-	//! Вонючие вы винючки, чтобы вас всех поразило бессилие!
-	// int err = wresize(this->handle, nh, nw);
-	// int err1 = mvwin(this->handle, ny, nx);
-	// if(err != OK) {
-	// 	mvprintw(17, 15, "Can't resize window: %s", strerror(errno));
-	// 	void* obj = malloc(1024 * 1024 * 5);
-	// 	if(obj) {
-	// 		free(obj);
-	// 	} else {
-	// 		mvprintw(20, 15, "Can't alloc mem: %s", strerror(errno));
-	// 	}
-	// }
 	if(cwidth == width && cheight == height && cx == nx && cy == ny) return;
 	if ((cx != nx || cy != ny) && cwidth == width && cheight == height)
 		return (void)mvwin(this->handle, cy = ny, cx = nx);
@@ -128,17 +119,17 @@ window::~window() {
 	this->parent = nullptr;
 }
 
-uint32_t window::get_width() const {
+uint32_t window::get_width() const noexcept {
 	return width;
 }
-uint32_t window::get_height() const {
+uint32_t window::get_height() const noexcept {
 	return height;
 }
-WINDOW* window::get_handle() const {
+WINDOW* window::get_handle() const noexcept {
 	return handle;
 }
 
-div* window::get_parent() const {
+div* window::get_parent() const noexcept {
 	return this->parent;
 }
 
@@ -154,6 +145,14 @@ div::~div() {
 };
 
 void div::append(window* win) {
+	window* check_window = this;
+	while (true) {
+		if (check_window == NULL) break;
+		if (check_window != win) check_window = check_window->parent;
+		else throw std::invalid_argument("window can't be this window or parent");
+	}
+	check_window = NULL;
+
 	this->children.push_back(win);
 	werase(win->handle);
 
@@ -170,13 +169,11 @@ bool div::remove(const window* win) {
 	return true;
 };
 
-decltype(div::children) div::get_children() {
-	return std::vector<window*>(this->children);
+decltype(div::children) div::get_children() const noexcept {
+	return decltype(div::children)(this->children);
 };
 
 void div::print() {
-	//this->refresh_size();
-
 	std::sort(this->children.begin(), this->children.end(), [](const window* win1, const window* win2) {
 		return win1->style.pos_z < win2->style.pos_z && win2->style.position != styles::keywords::SK_STATIC;
 	});
@@ -204,34 +201,6 @@ void div::print() {
 			win->ppadding_x = padding_x;
 
 			win->refresh_size();
-
-			// Means
-			// "Not above then (this->height - paddding_y), style.max_height
-			// and not less then style.min_height"
-			// style.max_height have priority
-			// uint32_t style_width = win->style.width.get_type() == styles::digit_type::DT_PIXEL
-			// 	? win->style.width.get_value() : win->style.width.get_value() * this->width / 100;
-			// uint32_t style_height = win->style.height.get_type() == styles::digit_type::DT_PIXEL
-			// 	? win->style.height.get_value() : win->style.height.get_value() * this->height / 100;
-
-			// uint32_t style_max_width = win->style.max_width.get_type() == styles::digit_type::DT_PIXEL
-			// 	? win->style.max_width.get_value() : win->style.max_width.get_value() * this->width / 100;
-			// uint32_t style_max_height = win->style.max_height.get_type() == styles::digit_type::DT_PIXEL
-			// 	? win->style.max_height.get_value() : win->style.max_height.get_value() * this->height / 100;
-
-			// uint32_t style_min_width = win->style.min_width.get_type() == styles::digit_type::DT_PIXEL
-			// 	? win->style.min_width.get_value() : win->style.min_width.get_value() * this->width / 100;
-			// uint32_t style_min_height = win->style.min_height.get_type() == styles::digit_type::DT_PIXEL
-			// 	? win->style.min_height.get_value() : win->style.min_height.get_value() * this->height / 100;
-
-			// win->height = fmin(
-			// 	fmax(style_height, style_min_height),
-			// 	fmin(this->height - padding_y, style_max_height)
-			// );
-			// win->width = fmin(
-			// 	fmax(style_width, style_min_width),
-			// 	fmin(this->width - padding_x, style_max_width)
-			// );
 
 			if(this->style.align == styles::keywords::SK_VERTICAL)
 				padding_y += win->height + win->style.margin_bottom;
@@ -263,15 +232,11 @@ p::~p() {
 // class p : public
 void p::print() {
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
-	//this->refresh_size();
-
 	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
 		werase(this->handle);
 		wnoutrefresh(this->handle);
 		return;
 	}
-	int x, y;
-	getmaxyx(this->handle, y, x);
 
 	int content_width  = this->width  - style.padding_left - style.padding_right;
 	int content_height = this->height - style.padding_top - style.padding_bottom;
@@ -397,6 +362,8 @@ input::~input() {
 
 //class button : public
 void button::print() {
+	on_pressed;
+
 	if(!this->handle) throw std::runtime_error("Can't use without window handle");
 
 	if(!this->style.is_visible || this->width == 0 || this->height == 0) {
@@ -408,7 +375,9 @@ void button::print() {
 	int content_width  = this->width  - style.padding_left - style.padding_right;
 	int content_height = this->height - style.padding_top - style.padding_bottom;
 
-	std::string result, txt = value;
+	std::string result;
+	std::string txt = (style.autotrim) ? utility::trim(this->value) : this->value;
+	txt = std::regex_replace(txt, std::regex("\\a|\\b|\\f|\\n|\\r|\\t|\\v"), "");
 
 	for (int i = 0; i < content_height; i += 1) {
 		std::string line;
@@ -442,22 +411,22 @@ button::~button() {
 }
 
 // Windows get_type() funtion defining
-win_type window::get_type() const {
+win_type window::get_type() const noexcept {
 	return wt_none;
 }
-win_type p::get_type() const {
+win_type p::get_type() const noexcept {
 	return wt_p;
 }
-win_type div::get_type() const {
+win_type div::get_type() const noexcept {
 	return wt_div;
 }
-win_type progress::get_type() const {
+win_type progress::get_type() const noexcept {
 	return wt_progress;
 }
-win_type input::get_type() const {
+win_type input::get_type() const noexcept {
 	return wt_input;
 }
-win_type button::get_type() const {
+win_type button::get_type() const noexcept {
 	return wt_button;
 }
 

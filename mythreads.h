@@ -10,6 +10,7 @@
 #include <memory>
 
 namespace ami {
+/// @brief Internal thread pool system. You should not use this
 namespace threads {
   using taskid_t = size_t;
 	using taskcb_t = std::function<void(std::atomic<bool>&)>;

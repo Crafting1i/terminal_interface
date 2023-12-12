@@ -40,6 +40,7 @@ namespace ami {
 		getmaxyx(stdscr, style.height, style.width);
 
 		this->div = new ami::div(style);
+		this->ws = new windows_selector(this->div);
 	}
 
 	void engine::start() {
@@ -47,7 +48,6 @@ namespace ami {
 
 		ami::key key_pressed, key_esc = "\u001B";
 
-		this->ws = new windows_selector(this->div);
 		this->on_key_pressed([this, &key_pressed](const ami::key& key) {
 			key_pressed = key;
 			if(key) {
@@ -123,6 +123,10 @@ namespace ami {
 		delete this->div;
 		this->mutex_widows.unlock();
 	}
+	
+	windows_selector* engine::get_ws() const noexcept {
+		return this->ws;
+	}
 
 	// class windows_selector : public
 	windows_selector::windows_selector(ami::window* win): focused(win) {
@@ -150,10 +154,10 @@ namespace ami {
 		delete this->info;
 	}
 
-	int windows_selector::get_selected_index() const {
+	int windows_selector::get_selected_index() const noexcept {
 		return this->selected_index;
 	}
-	ami::window* windows_selector::get_focused() const {
+	ami::window* windows_selector::get_focused() const noexcept {
 		return this->focused;
 	}
 	void windows_selector::update(const ami::key& key) {
@@ -188,7 +192,7 @@ namespace ami {
 	void windows_selector::move_focused(int x, int y) {
 		if(this->focused->style.position != styles::keywords::SK_FIXED)
 			throw std::logic_error("'this->focused->style.position' is not 'SK_FIXED'");
-		
+
 		this->focused->clear();
 		
 		if(this->focused->style.margin_top > y && y < 0)
@@ -202,27 +206,23 @@ namespace ami {
 	}
 
 	// class windows_selector : private
-	ami::window* windows_selector::list_up() {
+	ami::window* windows_selector::list_up() noexcept {
 		if(this->focused->get_type() != ami::win_type::wt_div)
 			return this->focused;
 
 		auto children = dynamic_cast<ami::div*>(this->focused)->get_children();
 		if(this->selected_index + 1 == children.size()) this->selected_index = 0;
 		else this->selected_index += 1;
-		
-		//mvprintw(10, 10, "%zu/%zu", this->selected_index, children.size());
 
 		return this->focused;
 	}
-	ami::window* windows_selector::list_down() {
+	ami::window* windows_selector::list_down() noexcept {
 		if(this->focused->get_type() != ami::win_type::wt_div)
 			return this->focused;
 
 		auto children = dynamic_cast<ami::div*>(this->focused)->get_children();
 		if(this->selected_index == 0) this->selected_index = children.size() - 1;
 		else this->selected_index -= 1;
-		
-		//mvprintw(10, 10, "%zu/%zu", this->selected_index, children.size());
 
 		return this->focused;
 	}

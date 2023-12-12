@@ -3,3 +3,5 @@ dist
 build
 # Variable Enviroments
 .env
+# Docs
+docs
